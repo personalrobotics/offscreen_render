@@ -10,6 +10,7 @@ import OpenGL.GL as gl
 import OpenGL.GLUT as glut
 import vispy.gloo
 import transforms
+import threading
 
 vertex = """
 uniform mat4 model;
@@ -39,6 +40,7 @@ def display():
     gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
     program.draw(gl.GL_TRIANGLES, indices)
     glut.glutSwapBuffers()
+    glut.glutLeaveMainLoop();
 
 def reshape(width,height):
     gl.glViewport(0, 0, width, height)
@@ -60,13 +62,18 @@ def timer(fps):
     glut.glutTimerFunc(1000/fps, timer, fps)
     glut.glutPostRedisplay()
 
+def otherThread():
+    while(True):
+        print "test"
+        threading._sleep(1)
 
 # Glut init
 # --------------------------------------
 glut.glutInit(sys.argv)
 glut.glutInitDisplayMode(glut.GLUT_DOUBLE | glut.GLUT_RGBA | glut.GLUT_DEPTH)
-glut.glutCreateWindow('Rotating Cube')
-glut.glutReshapeWindow(512,512)
+glut.glutCreateWindow('Offscreen Window')
+glut.glutReshapeWindow(1,1)
+glut.glutPositionWindow(-100, -100)
 glut.glutReshapeFunc(reshape)
 glut.glutKeyboardFunc(keyboard )
 glut.glutDisplayFunc(display)
@@ -101,9 +108,14 @@ phi, theta = 0,0
 
 # OpenGL initalization
 # --------------------------------------
-gl.glClearColor(1,1,1,1)
+gl.glClearColor(0,0,0,1)
 gl.glEnable(gl.GL_DEPTH_TEST)
+
 
 # Start
 # --------------------------------------
-glut.glutMainLoop()
+thread = threading.Thread(target = otherThread);
+thread.start()
+glut.glutMainLoop();
+thread.join(5.0)
+print "Done";

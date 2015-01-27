@@ -8,6 +8,12 @@ import math
 import numpy
 import numpy as np
 
+def invert(K):
+    M = K
+    R = M[0:2, 0:2]
+    M[0:2, 0:2] = np.transpose(R)
+    M[0:2, 3] = -np.dot(np.transpose(R), M[0:2, 3])
+    return M
 
 def translate(M, x, y=None, z=None):
     """

@@ -1,0 +1,14 @@
+<package>
+  <description brief="offscreen_render">
+
+     offscreen_render
+
+  </description>
+  <author>Matt Klingensmith</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <depend package="tf"/> 
+
+</package>
+
+
