@@ -147,6 +147,47 @@ def frustum( left, right, bottom, top, znear, zfar ):
     M[2,3] = -1.0
     return M
 
+
+
+def look_at(eyePosition3D, center3D, upVector3D):
+    forward = center3D - eyePosition3D;
+    #------------------
+
+    forward /= (np.sqrt(np.dot(forward, forward)))
+    #------------------
+    #Side = forward x up
+    side = np.cross(forward, upVector3D)
+    side /= np.sqrt(np.dot(side, side))
+    #------------------
+    #Recompute up as: up = side x forward
+    up = np.cross(side, forward)
+
+    matrix2 = np.zeros((4, 4), dtype=np.float32)
+    #------------------
+    matrix2[0, 0] = side[0]
+    matrix2[1, 0] = side[1]
+    matrix2[2, 0] = side[2]
+    matrix2[3, 0] = 0.0
+    #-----------------
+    matrix2[0, 1] = up[0]
+    matrix2[1, 1] = up[1]
+    matrix2[2, 1] = up[2]
+    matrix2[3, 1] = 0.0
+    #-----------------
+    matrix2[0, 2] = -forward[0]
+    matrix2[1, 2] = -forward[1]
+    matrix2[2, 2] = -forward[2]
+    matrix2[3, 2] = 0.0
+    matrix2[3, 3] = 1.0
+    matrix2[0:3, 3] = np.array([-eyePosition3D[0], -eyePosition3D[1], -eyePosition3D[2]]);
+    return matrix2;
+
+def perspective_camera_calib(fx, fy, cx, cy, near, far, width, height):
+    return np.array([[2 * fx / width, 0, 2 * (0.5 - cx / width), 0], 
+                     [0, 2 * fy / height, 2 * (cy / height - 0.5), 0], 
+                     [0, 0, -(far + near) / (far - near), -2 * far * near / (far - near)], 
+                     [0, 0, -1, 0]]);
+
 def perspective(fovy, aspect, znear, zfar):
     assert( znear != zfar )
     h = np.tan(fovy / 360.0 * np.pi) * znear

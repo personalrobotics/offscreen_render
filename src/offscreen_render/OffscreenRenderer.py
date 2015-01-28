@@ -69,17 +69,10 @@ class OffscreenRenderer:
 
     def set_view_projection_matrix(self, width, height, fx, fy, cx, cy, near, far, camera_transform):
         self.view = camera_transform
-        self.projection = tf.perspective(60, fx / fy, near, far)
-
-        #print tf.perspective(60, 4.0 / 3.0, near, far)
-        #self.projection = np.transpose(self.get_projection_matrix(width, height, fx, fy, cx, cy, near, far))
-        #print "proj:" + str(self.projection)
+        self.projection = self.get_projection_matrix(width, height, fx, fy, cx, cy, near, far)
 
     def get_projection_matrix(self, width, height, fx, fy, cx, cy, near, far):
-        return np.array([[2 * fx / width, 0, (width - 2 * cx), 0 ],
-                         [0, 2 * fy / height, (height - 2 * cy), 0],
-                         [0, 0, -far + near * far - near, -2 * far * near * far - near],
-                         [0, 0, -1, 0]]);
+        return tf.perspective_camera_calib(fx, fy, cx, cy, near, far, width, height);
 
     def add_kinbody(self, body):
         for link in body.GetLinks():
@@ -101,8 +94,8 @@ class OffscreenRenderer:
             #with self.framebuffers[name]:
             gloo.set_clear_color((0.0, 0.0, 0.0, 1))
             gloo.clear(color=True, depth=True)
-            self.programs[name]['view'] = self.view
-            self.programs[name]['projection'] = self.projection
+            self.programs[name]['view'] = np.transpose(self.view)
+            self.programs[name]['projection'] = np.transpose(self.projection)
             for body in self.objects:
                 self.programs[name].bind(body.vertex_buffer)
                 self.programs[name]['world'] = np.transpose(np.dot(body.body.GetTransform(), body.world))
@@ -116,8 +109,9 @@ class OffscreenRenderer:
     def onTimer(self, fps):
         glut.glutPostRedisplay()
         glut.glutTimerFunc(1000/60, lambda fp2 : self.onTimer(fp2),60)
-        camera_transform = self.env.GetViewer().GetCameraTransform())
-        self.set_view_projection_matrix(640., 480., 320., 240., 320., 240., 0.01, 4., np.transpose(camera_transform));
+        camera_transform = self.env.GetViewer().GetCameraTransform()
+
+        self.set_view_projection_matrix(640., 480., 320., 240., 320., 240., 0.01, 4.,camera_transform)
 
     def initialize_buffers(self):
         self.renderbuffers["depth"] = gloo.ColorBuffer(shape=(self.width, self.height), format='color', resizeable=False)
