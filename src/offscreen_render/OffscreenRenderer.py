@@ -20,6 +20,12 @@ class OffscreenRenderer:
         self.objects = []
         self.width = width
         self.height = height
+        self.fx = 0;
+        self.fy = 0;
+        self.cx = 0;
+        self.cy = 0;
+        self.near = 0;
+        self.far = 0;
 
         self.vertex_shaders["depth"] = """
                         uniform mat4 world;
@@ -27,20 +33,18 @@ class OffscreenRenderer:
                         uniform mat4 projection;
                         attribute vec3 position;
                         attribute vec3 color;
-                        varying float distToCamera;
                         void main()
                         {
                             vec4 cs_position =  view * world * vec4(position, 1.0);
-                            distToCamera = -cs_position.z;
                             gl_Position = projection * cs_position;
                         }
                         """
         self.fragment_shaders["depth"] = """
-                        varying float distToCamera;
-
+ 
                         void main()
                         {
-                            gl_FragColor = vec4(distToCamera, distToCamera, distToCamera, 1.0);
+                            float originalZ = gl_FragCoord.z / gl_FragCoord.w;
+                            gl_FragColor = vec4(originalZ, originalZ, originalZ, 1.0);
                         }
                         """
         self.vertex_shaders["color"] = """
@@ -68,7 +72,18 @@ class OffscreenRenderer:
         self.initialize_buffers()
 
     def set_view_projection_matrix(self, width, height, fx, fy, cx, cy, near, far, camera_transform):
-        self.view = camera_transform
+        self.width = width;
+        self.height = height;
+        self.fx = fx;
+        self.fy = fy;
+        self.cx = cx;
+        self.cy = cy;
+        self.near = near;
+        self.far = far;
+        v = camera_transform;
+        v[0:3, 0:3] = np.transpose(v[0:3, 0:3])
+        v[0:3, 0:3] = np.dot(np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]]), v[0:3, 0:3])
+        self.view = v;
         self.projection = self.get_projection_matrix(width, height, fx, fy, cx, cy, near, far)
 
     def get_projection_matrix(self, width, height, fx, fy, cx, cy, near, far):
@@ -109,9 +124,7 @@ class OffscreenRenderer:
     def onTimer(self, fps):
         glut.glutPostRedisplay()
         glut.glutTimerFunc(1000/60, lambda fp2 : self.onTimer(fp2),60)
-        camera_transform = self.env.GetViewer().GetCameraTransform()
-
-        self.set_view_projection_matrix(640., 480., 320., 240., 320., 240., 0.01, 4.,camera_transform)
+        #self.set_view_projection_matrix(self.width, self.height, self.fx, self.fy, self.cx, self.cy, self.near, self.far, self.view)
 
     def initialize_buffers(self):
         self.renderbuffers["depth"] = gloo.ColorBuffer(shape=(self.width, self.height), format='color', resizeable=False)
@@ -125,7 +138,7 @@ class OffscreenRenderer:
         glut.glutInit(sys.argv)
         glut.glutInitDisplayMode(glut.GLUT_DOUBLE | glut.GLUT_RGBA | glut.GLUT_DEPTH)
         glut.glutCreateWindow('Offscreen Window')
-        glut.glutReshapeWindow(512,512)
+        glut.glutReshapeWindow(self.width,self.height)
         glut.glutPositionWindow(100, 100)
         glut.glutReshapeFunc(lambda  x, y : self.reshape(x, y))
         glut.glutKeyboardFunc(lambda key, x, y: self.keyboard(x, y))
