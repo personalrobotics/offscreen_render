@@ -6,6 +6,12 @@ import vispy.gloo as gloo
 import GLObject
 import transforms as tf
 from openravepy import *
+import cv2
+from matplotlib import pyplot as plt
+
+colormap_r = np.linspace(0.1, 1, 100)
+colormap_g = np.linspace(0.1, 1, 100)
+colormap_b = np.linspace(0.1, 1, 100)
 
 class OffscreenRenderer:
     def __init__(self, width, height, env):
@@ -15,7 +21,6 @@ class OffscreenRenderer:
         self.vertex_shaders = dict()
         self.fragment_shaders = dict()
         self.framebuffers = dict()
-        self.renderbuffers = dict()
         self.programs = dict()
         self.objects = []
         self.width = width
@@ -71,6 +76,15 @@ class OffscreenRenderer:
                        """
         self.initialize_buffers()
 
+    def get_image_cv(self, buffer_name):
+        buf = self.framebuffers[buffer_name];
+        with buf:
+            data = gloo.wrappers.read_pixels(viewport=(0, 0, self.width, self.height),alpha=False)
+            print data.shape
+            plt.imshow(data[:, :, 0], plt.get_cmap("jet"));
+            plt.show()
+
+
     def set_view_projection_matrix(self, width, height, fx, fy, cx, cy, near, far, camera_transform):
         self.width = width;
         self.height = height;
@@ -92,7 +106,8 @@ class OffscreenRenderer:
     def add_kinbody(self, body):
         for link in body.GetLinks():
             for geometry in link.GetGeometries():
-                self.objects.append(GLObject.GLObject(body, link.GetTransform(), geometry, geometry.GetDiffuseColor()));
+                c = np.array([colormap_r[len(self.objects) % 100], colormap_g[len(self.objects) * 3 % 100], colormap_b[len(self.objects) * 7 % 100]])
+                self.objects.append(GLObject.GLObject(body, link.GetTransform(), geometry, c));
 
     def clear_bodies(self):
         self.objects = []
@@ -104,19 +119,21 @@ class OffscreenRenderer:
         pass;
 
     def display(self):
-        gl.glViewport(0, 0, self.width, self.height)
         for name in self.programs:
-            #with self.framebuffers[name]:
-            gloo.set_clear_color((0.0, 0.0, 0.0, 1))
-            gloo.clear(color=True, depth=True)
-            self.programs[name]['view'] = np.transpose(self.view)
-            self.programs[name]['projection'] = np.transpose(self.projection)
-            for body in self.objects:
-                self.programs[name].bind(body.vertex_buffer)
-                self.programs[name]['world'] = np.transpose(np.dot(body.body.GetTransform(), body.world))
-                self.programs[name].draw(gl.GL_TRIANGLES, body.index_buffer)
+            with self.framebuffers[name]:
+                gl.glViewport(0, 0, self.width, self.height)
+                gl.glEnable(gl.GL_DEPTH_TEST)
+                gloo.set_clear_color((0.0, 0.0, 0.0, 1))
+                gloo.clear(color=True, depth=True)
+                self.programs[name]['view'] = np.transpose(self.view)
+                self.programs[name]['projection'] = np.transpose(self.projection)
+                for body in self.objects:
+                    self.programs[name].bind(body.vertex_buffer)
+                    self.programs[name]['world'] = np.transpose(np.dot(body.body.GetTransform(), body.world))
+                    self.programs[name].draw(gl.GL_TRIANGLES, body.index_buffer)
         glut.glutSwapBuffers()
         #glut.glutLeaveMainLoop()
+        self.get_image_cv("depth")
 
     def loop(self):
         glut.glutMainLoop()
@@ -127,12 +144,10 @@ class OffscreenRenderer:
         #self.set_view_projection_matrix(self.width, self.height, self.fx, self.fy, self.cx, self.cy, self.near, self.far, self.view)
 
     def initialize_buffers(self):
-        self.renderbuffers["depth"] = gloo.ColorBuffer(shape=(self.width, self.height), format='color', resizeable=False)
-        self.renderbuffers["color"] = gloo.ColorBuffer(shape=(self.width, self.height), format='color', resizeable=False)
-        self.framebuffers["depth"] = gloo.FrameBuffer(color=self.renderbuffers["depth"], resizeable=False)
-        self.framebuffers["color"] = gloo.FrameBuffer(color=self.renderbuffers["color"], resizeable=False)
+        self.framebuffers["depth"] = gloo.FrameBuffer(color=gloo.ColorBuffer((self.width, self.height)), resizeable=False, depth=gloo.DepthBuffer((self.width, self.height)))
+        self.framebuffers["color"] = gloo.FrameBuffer(color=gloo.ColorBuffer((self.width, self.height)), resizeable=False, depth=gloo.DepthBuffer((self.width, self.height)))
         self.programs["depth"] = gloo.Program(self.vertex_shaders["depth"], self.fragment_shaders["depth"])
-        #self.programs["color"] = gloo.Program(self.vertex_shaders["color"], self.fragment_shaders["color"])
+        self.programs["color"] = gloo.Program(self.vertex_shaders["color"], self.fragment_shaders["color"])
 
     def initialize_context(self):
         glut.glutInit(sys.argv)

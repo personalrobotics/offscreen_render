@@ -36,6 +36,7 @@ if __name__ == "__main__":
     if args.debug:
         openravepy.RaveSetDebugLevel(openravepy.DebugLevel.Debug)
 
+
     herbpy_args = {'sim':args.sim,
                    'attach_viewer':args.viewer,
                    'robot_xml':args.robot_xml,
@@ -54,7 +55,7 @@ if __name__ == "__main__":
         time.sleep(1)
 
     renderer = OffscreenRenderer.OffscreenRenderer(camera.width, camera.height, env);
-    print "USING TRANSFORM " + str(camera.transform)
+    print "USING TRANSFORM\n" + str(camera.transform)
     renderer.set_view_projection_matrix(camera.width, camera.height, camera.fx, camera.fy, camera.cx, camera.cy, 0.01, 4., camera.transform);
     renderer.add_kinbody(robot);
     renderer.initialize_context()

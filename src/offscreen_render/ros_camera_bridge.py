@@ -24,7 +24,6 @@ class RosCamera():
         print "Constructor"
 
     def info_callback(self, camera_info):
-        print "Callback"
         self.last_info = camera_info
         self.frame = camera_info.header.frame_id
         self.last_time = camera_info.header.stamp
@@ -50,5 +49,3 @@ class RosCamera():
             self.transform =  tf.transformations.quaternion_matrix(rot);
             self.transform[0:3, 3] = trans
             self.has_transform = True
-
-            print self.transform
