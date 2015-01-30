@@ -48,13 +48,13 @@ if __name__ == "__main__":
     env, robot = herbpy.initialize(**herbpy_args)
     rospy.init_node('herbpy')
     time.sleep(1)
-    camera = ros_camera_bridge.RosCamera('/camera/depth/camera_info', '/map');
+    camera = ros_camera_bridge.RosCamera('/camera/depth/camera_info', '/map', 0.01, 4);
 
 
     while not camera.has_transform:
         time.sleep(1)
 
-    renderer = OffscreenRenderer.OffscreenRenderer(camera.width, camera.height, env);
+    renderer = OffscreenRenderer.OffscreenRenderer(camera.width, camera.height, env, camera);
     print "USING TRANSFORM\n" + str(camera.transform)
     renderer.set_view_projection_matrix(camera.width, camera.height, camera.fx, camera.fy, camera.cx, camera.cy, 0.01, 4., camera.transform);
     renderer.add_kinbody(robot);

@@ -3,9 +3,20 @@ import rospy
 import tf
 import numpy as np
 from sensor_msgs.msg import CameraInfo
+import sensor_msgs
+from sensor_msgs import *
+import ctypes
+import math
+import struct
+import time;
+import sensor_msgs.point_cloud2 as pc2
+from multiprocessing import Pool
+from itertools import product
+from sensor_msgs.msg import PointCloud2, PointField, ChannelFloat32
+from geometry_msgs.msg import Point32
 
 class RosCamera():
-    def __init__(self, camera_name, base_frame):
+    def __init__(self, camera_name, base_frame, near, far):
         self.base_frame = base_frame
         self.listener = tf.TransformListener()
         self.camera_name = camera_name;
@@ -21,7 +32,8 @@ class RosCamera():
         self.cy = 0;
         self.width = 0;
         self.height = 0;
-        print "Constructor"
+        self.near = near;
+        self.far = far;
 
     def info_callback(self, camera_info):
         self.last_info = camera_info
@@ -37,6 +49,23 @@ class RosCamera():
 
         self.lookup_transform()
 
+
+
+    def create_cloud_xyz32(self, header, pts):
+        p_list = [None] * pts.shape[1] 
+        chlist = [0.] * pts.shape[1]
+        i = 0
+        for p in pts.T: 
+            p_list[i] = Point32(p[0],p[1],p[2])
+            i = i + 1
+        ch = ChannelFloat32('t',chlist) 
+        pc = PointCloud(None,p_list,[ch])
+        pc.header.stamp = rospy.Time.now();
+        pc.header.frame_id = self.frame;
+        print "Created cloud"
+        print pc.header
+        return pc; 
+
     def lookup_transform(self):
         if(not self.has_info):
             return
@@ -49,3 +78,14 @@ class RosCamera():
             self.transform =  tf.transformations.quaternion_matrix(rot);
             self.transform[0:3, 3] = trans
             self.has_transform = True
+
+    def create_synth_pointcloud(self, depth_image):
+        shape = depth_image.shape;
+        rows = shape[0];
+        cols = shape[1];
+        start = time.clock();
+        pc = pc2.create_cloud_xyz32(None, np.reshape(depth_image, (rows * cols, 3)))
+        pc.header.stamp = rospy.Time.now();
+        pc.header.frame_id = self.frame;
+        print "Convert", time.clock() - start;
+        return pc;
