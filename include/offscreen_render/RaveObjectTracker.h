@@ -62,7 +62,6 @@ namespace offscreen_render
             pcl::tracking::ApproxNearestPairPointCloudCoherence<PointCloud::PointType>::Ptr coherence;
             boost::shared_ptr<pcl::tracking::DistanceCoherence<PointCloud::PointType> > distanceCoherence;
             boost::shared_ptr<pcl::search::Octree<PointCloud::PointType> > search;
-            OpenRAVE::EnvironmentBasePtr environment;
             PointCloud::ConstPtr lastSensorCloud;
             PointCloud::Ptr filteredSensorCloud;
             PointCloud::Ptr synthCloud;
