@@ -53,7 +53,6 @@ namespace offscreen_render
         toReturn.block(0, 0, 3, 3) = transform.linear();
         toReturn.block(0, 2, 3, 1) *= -1;
         toReturn.block(0, 1, 3, 1) *= -1;
-        //toReturn.block(0, 0, 3, 3) = flipper * toReturn.block(0, 0, 3, 3);
         toReturn.block(0, 3, 3, 1) = transform.translation();
         return toReturn;
     }

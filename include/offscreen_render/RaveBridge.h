@@ -36,6 +36,8 @@ namespace offscreen_render
                 {
                     models.push_back(CreateModel(shader, body, link));
                 }
+
+                bodies.push_back(body);
             }
 
             inline RaveModel CreateModel(const Shader& shader,const OpenRAVE::KinBodyPtr& body, const OpenRAVE::KinBody::LinkPtr& link)
@@ -100,6 +102,7 @@ namespace offscreen_render
             }
 
             std::vector<RaveModel> models;
+            std::vector<OpenRAVE::KinBodyPtr> bodies;
 
 
     };

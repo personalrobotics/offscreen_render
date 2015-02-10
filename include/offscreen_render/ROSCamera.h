@@ -13,6 +13,10 @@ namespace offscreen_render
     class ROSCamera
     {
         public:
+            ROSCamera()
+            {
+
+            }
             ROSCamera(const ros::NodeHandle& node, const std::string& camera,
                     const std::string& base, float near, float far);
             virtual ~ROSCamera();
@@ -20,7 +24,7 @@ namespace offscreen_render
             void CameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& info);
 
             void LookupTransform();
-
+            bool LookupTransform(const std::string& frame, Transform& transformOut);
             ros::NodeHandle nodeHandle;
             std::string frame;
             std::string baseFrame;

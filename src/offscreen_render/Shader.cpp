@@ -25,7 +25,7 @@ namespace offscreen_render
             glDeleteProgram(programID);
     }
 
-    void Shader::LoadFromFile(const std::string& fragmentFile, const std::string& vertexFile)
+    bool Shader::LoadFromFile(const std::string& fragmentFile, const std::string& vertexFile)
     {
         printf("Creating shaders...\n");
         // Create the shaders
@@ -47,7 +47,7 @@ namespace offscreen_render
         {
             printf("Failed to open %s\n", vertexFile.c_str());
             getchar();
-            return;
+            return false;
         }
 
         printf("Opening fragment shader file..\n");
@@ -78,7 +78,8 @@ namespace offscreen_render
         {
             std::vector<char> VertexShaderErrorMessage(InfoLogLength + 1);
             glGetShaderInfoLog(vertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
-            printf("%s\n", &VertexShaderErrorMessage[0]);
+            printf("%s", &VertexShaderErrorMessage[0]);
+
         }
 
         // Compile Fragment Shader
@@ -94,7 +95,7 @@ namespace offscreen_render
         {
             std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
             glGetShaderInfoLog(fragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
-            printf("%s\n", &FragmentShaderErrorMessage[0]);
+            printf("%s", &FragmentShaderErrorMessage[0]);
         }
 
         // Link the program
@@ -111,7 +112,7 @@ namespace offscreen_render
         {
             std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
             glGetProgramInfoLog(programID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
-            printf("%s\n", &ProgramErrorMessage[0]);
+            printf("%s", &ProgramErrorMessage[0]);
         }
 
         projectionMatrixID = glGetUniformLocation(programID, "Projection");
@@ -120,6 +121,7 @@ namespace offscreen_render
 
         glDeleteShader(vertexShaderID);
         glDeleteShader(fragmentShaderID);
+        return true;
     }
 
 }

@@ -28,6 +28,28 @@ namespace offscreen_render
     }
 
 
+
+    bool ROSCamera::LookupTransform(const std::string& frameIn, Transform& tfOut)
+    {
+        tf::StampedTransform stampedTransform;
+
+        try
+        {
+            listener.lookupTransform(baseFrame, frameIn, lastTime, stampedTransform);
+        }
+        catch(tf::LookupException& ex)
+        {
+            return false;
+        }
+        catch(tf::ExtrapolationException& ex)
+        {
+            return false;
+        }
+
+        tfOut = TFToTransform(stampedTransform);
+        return true;
+    }
+
     void ROSCamera::LookupTransform()
     {
         if(!hasInfo) return;

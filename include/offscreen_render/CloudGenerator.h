@@ -26,7 +26,7 @@ namespace offscreen_render
             {
                 pointCloudPublisher.publish(cloud);
             }
-            void GenerateCloud(const FrameBuffer& buffer, PointCloud::Ptr cloud, const std::string& frame);
+            void GenerateCloud(const FrameBuffer& buffer, PointCloud::Ptr cloud, const std::string& frame, const float& fx, const float& fy, const float& cx, const float& cy);
             ros::Publisher pointCloudPublisher;
     };
 

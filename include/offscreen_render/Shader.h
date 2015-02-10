@@ -51,7 +51,7 @@ namespace offscreen_render
             }
 
 
-            void LoadFromFile(const std::string& fragmentFile, const std::string& vertexFile);
+            bool LoadFromFile(const std::string& fragmentFile, const std::string& vertexFile);
 
             ProgramID programID;
 
