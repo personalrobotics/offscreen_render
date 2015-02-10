@@ -60,7 +60,8 @@ namespace offscreen_render
             return false;
         }
         glfwMakeContextCurrent(window);
-
+        glfwSwapInterval(0);
+        glfwHideWindow(window);
         GLenum err = glewInit();
         if (err != GLEW_OK)
         {
@@ -157,18 +158,71 @@ namespace offscreen_render
         glfwMakeContextCurrent(window);
         synthCloud.reset(new PointCloud());
         filteredSensorCloud.reset(new PointCloud());
-
+        filteredSynthCloud.reset(new PointCloud());
+        cancelThreads = false;
+        needsUpdate = false;
+        numIters = 0;
+        trackThread = std::thread(std::bind(&RaveObjectTracker::TrackThread, this));
     }
 
     void RaveObjectTracker::EndTracking()
     {
         bridge.models.clear();
         bridge.bodies.clear();
+        cancelThreads = true;
+        trackThread.join();
+    }
+
+    void RaveObjectTracker::TrackThread()
+    {
+        while(!cancelThreads)
+        {
+            if(needsUpdate && lastSensorCloud.get() && synthCloud.get() && lastSensorCloud->points.size() > 0 && synthCloud->points.size() > 0)
+            {
+                gridFilter.setInputCloud (lastSensorCloud);
+                gridFilter.filter(*filteredSensorCloud);
+                gridFilter.setInputCloud (synthCloud);
+                gridFilter.filter(*filteredSynthCloud);
+                filteredSensorCloud->header.frame_id = depthCamera->frame;
+
+                Transform worldToSensorCloud;
+                bool foundTransform = depthCamera->LookupTransform(lastSensorCloud->header.frame_id, worldToSensorCloud);
+
+                if(foundTransform)
+                {
+                   Transform cameraToSensorCloud = depthCamera->transform.inverse() * worldToSensorCloud;
+                   pcl::transformPointCloud(*filteredSensorCloud, *filteredSensorCloud, cameraToSensorCloud);
+                   for (OpenRAVE::KinBodyPtr& model : bridge.bodies)
+                   {
+                       Transform worldToObject = ORToTransform(model->GetTransform());
+                       Transform cameraToObject = depthCamera->transform.inverse() * worldToObject;
+                       pcl::transformPointCloud(*filteredSynthCloud, *filteredSynthCloud, cameraToObject.inverse());
+
+                       tracker->setTrans(cameraToObject);
+                       tracker->setInputCloud(filteredSensorCloud);
+                       tracker->setReferenceCloud(filteredSynthCloud);
+                       tracker->compute();
+
+                       Transform tf = tracker->getResult().toEigenMatrix();
+                       worldToObject = depthCamera->transform * tf;
+                       model->GetEnv()->GetMutex().lock();
+                       model->SetTransform(TransformToOR(worldToObject));
+                       model->GetEnv()->GetMutex().unlock();
+                       needsUpdate = false;
+                       numIters++;
+                   }
+                }
+            }
+            usleep(1000);
+        }
     }
 
     void RaveObjectTracker::Track()
     {
+        if(needsUpdate) return;
+
         ros::spinOnce();
+        glfwMakeContextCurrent(window);
         glfwPollEvents();
         renderer.projectionMatrix = GetPerspectiveMatrix(depthCamera->fx, depthCamera->fy, depthCamera->cx, depthCamera->cy, depthCamera->near, depthCamera->far, depthCamera->width, depthCamera->height);
         renderer.viewMatrix = GetViewMatrix(depthCamera->transform);
@@ -179,37 +233,8 @@ namespace offscreen_render
         renderer.Draw();
         cloudGenerator.GenerateCloud(renderer.buffer, synthCloud, depthCamera->frame, depthCamera->fx, depthCamera->fy, depthCamera->cx, depthCamera->cy);
         cloudGenerator.PublishCloud(synthCloud);
+        needsUpdate = true;
 
-        if(lastSensorCloud.get() && synthCloud.get() && lastSensorCloud->points.size() > 0 && synthCloud->points.size() > 0)
-        {
-            gridFilter.setInputCloud (lastSensorCloud);
-            gridFilter.filter(*filteredSensorCloud);
-            filteredSensorCloud->header.frame_id = depthCamera->frame;
-
-            Transform worldToSensorCloud;
-            bool foundTransform = depthCamera->LookupTransform(lastSensorCloud->header.frame_id, worldToSensorCloud);
-
-            if(foundTransform)
-            {
-               Transform cameraToSensorCloud = depthCamera->transform.inverse() * worldToSensorCloud;
-               pcl::transformPointCloud(*filteredSensorCloud, *filteredSensorCloud, cameraToSensorCloud);
-               for (OpenRAVE::KinBodyPtr& model : bridge.bodies)
-               {
-                   Transform worldToObject = ORToTransform(model->GetTransform());
-                   Transform cameraToObject = depthCamera->transform.inverse() * worldToObject;
-                   pcl::transformPointCloud(*synthCloud, *synthCloud, cameraToObject.inverse());
-
-                   tracker->setTrans(cameraToObject);
-                   tracker->setInputCloud(filteredSensorCloud);
-                   tracker->setReferenceCloud(synthCloud);
-                   tracker->compute();
-
-                   Transform tf = tracker->getResult().toEigenMatrix();
-                   worldToObject = depthCamera->transform * tf;
-                   model->SetTransform(TransformToOR(worldToObject));
-               }
-            }
-        }
     }
 
     void RaveObjectTracker::TrackObject(const OpenRAVE::KinBodyPtr& body, int iterations)
@@ -220,7 +245,7 @@ namespace offscreen_render
             return;
         }
         BeginTracking(body);
-        for (int i = 0; i < iterations; i++)
+        while(numIters < iterations)
         {
             if(glfwWindowShouldClose(window))
             {

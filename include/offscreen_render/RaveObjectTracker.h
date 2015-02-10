@@ -15,6 +15,7 @@
 #include <pcl/tracking/distance_coherence.h>
 #include <pcl/filters/voxel_grid.h>
 #include <GLFW/glfw3.h>
+#include <thread>
 
 namespace offscreen_render
 {
@@ -48,6 +49,7 @@ namespace offscreen_render
             void BeginTracking(const OpenRAVE::KinBodyPtr& body);
             void EndTracking();
             void Track();
+            void TrackThread();
 
             void TrackObject(const OpenRAVE::KinBodyPtr& body, int iterations);
 
@@ -65,9 +67,14 @@ namespace offscreen_render
             PointCloud::ConstPtr lastSensorCloud;
             PointCloud::Ptr filteredSensorCloud;
             PointCloud::Ptr synthCloud;
+            PointCloud::Ptr filteredSynthCloud;
             std::shared_ptr<Tracker> tracker;
             GLFWwindow* window;
             bool initialized;
+            bool needsUpdate;
+            bool cancelThreads;
+            std::thread trackThread;
+            int numIters;
     };
 
 }
