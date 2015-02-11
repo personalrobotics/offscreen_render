@@ -23,4 +23,4 @@ The object needs to be localized fairly well (within 10 cm) before tracking; but
 
 ![Image](http://i.imgur.com/hhyGqER.png)
 
-The tracker creates an offscreen window to get an OpenGL context. Do not close it.
+The tracker creates an offscreen window to get an OpenGL context. Do not close it. It also publishes a synthetic point cloud to `offscreen_render/synth_point_cloud` for debugging purposes.
