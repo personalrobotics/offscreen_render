@@ -1,6 +1,17 @@
 # offscreen_render
 A utility for rendering OpenRAVE kinbodies offscreen to get properties like depth, occlusion, color, etc.
 
+**Installation Requirements**
+
+The project depends on the following:
+
+* OpenRAVE (specifically, the github package [openrave_catkin](https://github.com/personalrobotics/openrave_catkin))
+* ROS Hydro
+* PCL 1.6 or higher (included in ROS-hydro-desktop-full)
+* OpenGL 2.1 or higher (included in most linux distros)
+* GLEW (included in GLFW)
+* [GLFW framework 3.0](http://www.glfw.org/) or higher
+
 **Object Tracker Usage**:
 
 This project builds an OpenRAVE object tracker plugin called "object_tracker". The plugin requires the following inputs:
