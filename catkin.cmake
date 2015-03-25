@@ -3,13 +3,13 @@ find_package(catkin REQUIRED)
 catkin_package()
 catkin_python_setup()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/cmake)
-
 find_package(OpenRAVE REQUIRED)
 find_package(GLEW REQUIRED)
-
+find_package(X11 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(PkgConfig REQUIRED)
 find_package( PCL REQUIRED )
+set(XLibraries Xcursor Xrandr Xinerama Xi)
 pkg_search_module(GLFW REQUIRED glfw3)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -54,14 +54,14 @@ set(SOURCES
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 add_library(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME}  ${OPENRAVE_LIBRARY_DIRS} ${OPENRAVE_LIBRARIES}  ${OpenRAVE_CORE_LIBRARIES} ${catkin_LIBRARIES} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES}  ${GLEW_LIBRARIES} ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}  ${OPENRAVE_LIBRARY_DIRS} ${OPENRAVE_LIBRARIES}  ${OpenRAVE_CORE_LIBRARIES} ${catkin_LIBRARIES} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES}  ${GLEW_LIBRARIES} ${PCL_LIBRARIES} ${X11_LIBRARIES} ${XLibrares})
 
 include_directories(${catkin_INCLUDE_DIRS} include ${OPENGL_INCLUDE_DIRS} ${GLFW_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS} ${OpenRAVE_INCLUDE_DIRS})
 add_executable(test_cpp src/offscreen_render/test_cpp.cpp)
-target_link_libraries(test_cpp ${PROJECT_NAME})
+target_link_libraries(test_cpp ${PROJECT_NAME} ${X11_LIBRARIES} ${XLibraries})
 
 openrave_plugin("object_tracker" src/offscreen_render/Plugin.cpp)
-target_link_libraries("object_tracker"  ${OPENRAVE_LIBRARY_DIRS} ${OPENRAVE_LIBRARIES}  ${OpenRAVE_CORE_LIBRARIES} ${catkin_LIBRARIES} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES}  ${GLEW_LIBRARIES} ${PCL_LIBRARIES})
+target_link_libraries("object_tracker"  ${OPENRAVE_LIBRARY_DIRS} ${OPENRAVE_LIBRARIES}  ${OpenRAVE_CORE_LIBRARIES} ${catkin_LIBRARIES} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES}  ${GLEW_LIBRARIES} ${PCL_LIBRARIES} ${X11_LIBRARIES} ${XLibrares})
 target_link_libraries("object_tracker" ${PROJECT_NAME})
 
 
