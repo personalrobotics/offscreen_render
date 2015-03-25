@@ -57,6 +57,7 @@ namespace offscreen_render
             ros::Subscriber pointCloudSub;
             OffscreenRenderer renderer;
             Shader depthShader;
+            Shader colorShader;
             std::shared_ptr<ROSCamera> depthCamera;
             RaveBridge bridge;
             CloudGenerator cloudGenerator;

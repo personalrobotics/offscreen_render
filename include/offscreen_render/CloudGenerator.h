@@ -9,7 +9,7 @@
 
 namespace offscreen_render
 {
-    typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+    typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
 
     class CloudGenerator
     {
@@ -26,7 +26,7 @@ namespace offscreen_render
             {
                 pointCloudPublisher.publish(cloud);
             }
-            void GenerateCloud(const FrameBuffer& buffer, PointCloud::Ptr cloud, const std::string& frame, const float& fx, const float& fy, const float& cx, const float& cy);
+            void GenerateCloud(const FrameBuffer<float, 3>& buffer, const FrameBuffer<uint8_t, 3>& colorBuffer, PointCloud::Ptr cloud, const std::string& frame, const float& fx, const float& fy, const float& cx, const float& cy);
             ros::Publisher pointCloudPublisher;
     };
 

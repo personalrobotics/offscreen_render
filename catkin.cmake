@@ -49,6 +49,7 @@ set(SOURCES
     src/offscreen_render/OffscreenRenderer.cpp
     src/offscreen_render/CloudGenerator.cpp
     src/offscreen_render/RaveObjectTracker.cpp
+    src/offscreen_render/RaveArmTracker.cpp
     )
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})

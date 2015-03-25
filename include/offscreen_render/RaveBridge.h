@@ -11,13 +11,42 @@ namespace offscreen_render
     class RaveBridge
     {
         public:
-
+            static uint32_t colorTable[128];
             struct RaveModel
             {
                 OpenRAVE::KinBodyPtr body;
                 OpenRAVE::KinBody::LinkPtr link;
                 std::vector<Model> models;
             };
+
+            int GetColorIndex(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+            {
+                uint32_t c = ((uint32_t)r << 24) | ((uint32_t)g << 16) | ((uint32_t)b << 8) | (uint32_t)a;
+                return GetColorIndex(c);
+            }
+
+            int GetColorIndex(uint32_t color)
+            {
+                for(int i = 0; i < 128; i++)
+                {
+                    if (color == colorTable[i])
+                    {
+                        return i;
+                    }
+                }
+                return -1;
+            }
+
+            OpenRAVE::Vector ColorIntToRaveColor(int color)
+            {
+                uint8_t red =   (color & 0xFF000000) >> 24;
+                uint8_t green = (color & 0x00FF0000) >> 16;
+                uint8_t blue =  (color & 0x0000FF00) >> 8;
+                uint8_t alpha = (color & 0x000000FF);
+
+                return OpenRAVE::Vector((float)red / 256.0f, (float)green / 256.0f, (float)blue / 256.0f);
+            }
+
 
             inline void GetAllModels(std::vector<Model>& flatModels)
             {
@@ -30,17 +59,42 @@ namespace offscreen_render
                 }
             }
 
-            inline void CreateModels(const Shader& shader, const OpenRAVE::KinBodyPtr& body)
+            inline void CreateModels(const Shader& shader, const OpenRAVE::RobotBase::ManipulatorPtr& manip)
+            {
+                OpenRAVE::RobotBasePtr robot = manip->GetRobot();
+                std::vector<int> indices = manip->GetArmIndices();
+
+                std::vector<OpenRAVE::KinBody::LinkPtr> affectedLinks;
+
+                for (const OpenRAVE::KinBody::LinkPtr& link : robot->GetLinks())
+                {
+                    for (int idx : indices)
+                    {
+                          if( robot->DoesAffect(robot->GetJointFromDOFIndex(idx)->GetJointIndex(), link->GetIndex()))
+                          {
+                              affectedLinks.push_back(link);
+                          }
+                    }
+                }
+
+                for (OpenRAVE::KinBody::LinkPtr link : affectedLinks)
+                {
+                    models.push_back(CreateModel(shader, robot, link, ColorIntToRaveColor(colorTable[link->GetIndex()])));
+                }
+            }
+
+            inline void CreateModels(const Shader& shader, const OpenRAVE::KinBodyPtr& body, const OpenRAVE::Vector& color)
             {
                 for(const OpenRAVE::KinBody::LinkPtr& link : body->GetLinks())
                 {
-                    models.push_back(CreateModel(shader, body, link));
+                    models.push_back(CreateModel(shader, body, link, color));
                 }
 
                 bodies.push_back(body);
             }
 
-            inline RaveModel CreateModel(const Shader& shader,const OpenRAVE::KinBodyPtr& body, const OpenRAVE::KinBody::LinkPtr& link)
+            inline RaveModel CreateModel(const Shader& shader, const OpenRAVE::KinBodyPtr& body,
+                    const OpenRAVE::KinBody::LinkPtr& link, const OpenRAVE::Vector& color)
             {
                 RaveModel model;
                 model.link = link;
@@ -48,7 +102,7 @@ namespace offscreen_render
 
                 for (const OpenRAVE::KinBody::Link::GeometryConstPtr& geom : link->GetGeometries())
                 {
-                    model.models.push_back(CreateModel(shader, geom,  link->GetTransform() * geom->GetTransform(), geom->GetDiffuseColor()));
+                    model.models.push_back(CreateModel(shader, geom,  link->GetTransform() * geom->GetTransform(), color));
                 }
                 return model;
             }
@@ -101,8 +155,10 @@ namespace offscreen_render
                 }
             }
 
+
             std::vector<RaveModel> models;
             std::vector<OpenRAVE::KinBodyPtr> bodies;
+
 
 
     };

@@ -13,7 +13,17 @@ namespace offscreen_render
     class ROSCamera
     {
         public:
-            ROSCamera()
+            ROSCamera() :
+                hasInfo(false),
+                hasTransform(false),
+                fx(0),
+                fy(0),
+                cx(0),
+                cy(0),
+                width(0),
+                height(0),
+                near(0),
+                far(0)
             {
 
             }

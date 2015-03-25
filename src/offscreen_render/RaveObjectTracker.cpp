@@ -3,14 +3,31 @@
 namespace offscreen_render
 {
 
-    RaveObjectTracker::RaveObjectTracker()
+    // This defines 128 possible objects to track by their color ID. They are set up to look as different as possible for debugging purposes,
+    // perhaps its better to just treat the color as their ID directly?
+    uint32_t RaveBridge::colorTable[128] =
+    {
+            0xFFFFFFFF, 0x000011FF, 0xFF0000FF, 0x00FF00FF, 0x0000FFFF, 0xFFFF00FF, 0x00FFFFFF, 0xFF00FFFF, 0x808080FF, 0xFF8080FF, 0x80FF80FF, 0x8080FFFF, 0x008080FF, 0x800080FF, 0x808000FF, 0xFFFF80FF, 0x80FFFFFF, 0xFF80FFFF, 0xFF0080FF, 0x80FF00FF,
+            0x0080FFFF, 0x00FF80FF, 0x8000FFFF, 0xFF8000FF, 0x000080FF, 0x800000FF, 0x008000FF, 0x404040FF, 0xFF4040FF, 0x40FF40FF, 0x4040FFFF, 0x004040FF, 0x400040FF, 0x404000FF, 0x804040FF, 0x408040FF, 0x404080FF, 0xFFFF40FF, 0x40FFFFFF,
+            0xFF40FFFF, 0xFF0040FF, 0x40FF00FF, 0x0040FFFF, 0xFF8040FF, 0x40FF80FF, 0x8040FFFF, 0x00FF40FF, 0x4000FFFF, 0xFF4000FF, 0x000040FF, 0x400000FF, 0x004000FF, 0x008040FF, 0x400080FF, 0x804000FF, 0x80FF40FF, 0x4080FFFF, 0xFF4080FF,
+            0x800040FF, 0x408000FF, 0x004080FF, 0x808040FF, 0x408080FF, 0x804080FF, 0xC0C0C0FF, 0xFFC0C0FF, 0xC0FFC0FF, 0xC0C0FFFF, 0x00C0C0FF, 0xC000C0FF, 0xC0C000FF, 0x80C0C0FF, 0xC080C0FF, 0xC0C080FF, 0x40C0C0FF, 0xC040C0FF, 0xC0C040FF,
+            0xFFFFC0FF, 0xC0FFFFFF, 0xFFC0FFFF, 0xFF00C0FF, 0xC0FF00FF, 0x00C0FFFF, 0xFF80C0FF, 0xC0FF80FF, 0x80C0FFFF, 0xFF40C0FF, 0xC0FF40FF, 0x40C0FFFF, 0x00FFC0FF, 0xC000FFFF, 0xFFC000FF, 0x0000C0FF, 0xC00000FF, 0x00C000FF, 0x0080C0FF,
+            0xC00080FF, 0x80C000FF, 0x0040C0FF, 0xC00040FF, 0x40C000FF, 0x80FFC0FF, 0xC080FFFF, 0xFFC080FF, 0x8000C0FF, 0xC08000FF, 0x00C080FF, 0x8080C0FF, 0xC08080FF, 0x80C080FF, 0x8040C0FF, 0xC08040FF, 0x40C080FF, 0x40FFC0FF, 0xC040FFFF,
+            0xFFC040FF, 0x4000C0FF, 0xC04000FF, 0x00C040FF, 0x4080C0FF, 0xC04080FF, 0x80C040FF, 0x4040C0FF, 0xC04040FF, 0x40C040FF, 0x202020FF, 0xFF2020FF, 0x20FF20FF
+    };
+
+    RaveObjectTracker::RaveObjectTracker() :
+            numIters(0),
+            needsUpdate(false)
     {
         initialized = false;
         window = NULL;
     }
 
     RaveObjectTracker::RaveObjectTracker(const ros::NodeHandle& handle) :
-        node(handle)
+        node(handle),
+        numIters(0),
+        needsUpdate(false)
     {
         initialized = false;
         window = NULL;
@@ -77,13 +94,22 @@ namespace offscreen_render
         pointCloudSub = node.subscribe<PointCloud>(pointCloudTopic, 1, &RaveObjectTracker::PointCloudCallback, this);
 
         std::string shaders = ros::package::getPath("offscreen_render") + "/shaders/";
+
         if(!depthShader.LoadFromFile(shaders + "FragmentShader.glsl", shaders + "VertexShader.glsl"))
         {
-            RAVELOG_ERROR("Failed to load shaders.");
+            RAVELOG_ERROR("Failed to load depth shaders.");
             return false;
         }
 
-        renderer.shader = &depthShader;
+        if(!colorShader.LoadFromFile(shaders + "ColorFragmentShader.glsl", shaders + "VertexShader.glsl"))
+        {
+            RAVELOG_ERROR("Failed to load color shaders.");
+            return false;
+        }
+
+        renderer.depthShader = &depthShader;
+        renderer.colorShader = &colorShader;
+
         depthCamera.reset(new ROSCamera(node, depthInfoTopic, fixedFrame, near, far));
         int tries = 0;
         while (!depthCamera->hasTransform && tries < 1000)
@@ -148,7 +174,7 @@ namespace offscreen_render
 
     void RaveObjectTracker::BeginTracking(const OpenRAVE::KinBodyPtr& body)
     {
-        bridge.CreateModels(depthShader, body);
+        bridge.CreateModels(depthShader, body, OpenRAVE::Vector(1, 1, 1, 1));
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
@@ -231,7 +257,7 @@ namespace offscreen_render
         bridge.UpdateModels();
         bridge.GetAllModels(renderer.models);
         renderer.Draw();
-        cloudGenerator.GenerateCloud(renderer.buffer, synthCloud, depthCamera->frame, depthCamera->fx, depthCamera->fy, depthCamera->cx, depthCamera->cy);
+        cloudGenerator.GenerateCloud(renderer.depthBuffer, renderer.colorBuffer, synthCloud, depthCamera->frame, depthCamera->fx, depthCamera->fy, depthCamera->cx, depthCamera->cy);
         cloudGenerator.PublishCloud(synthCloud);
         needsUpdate = true;
 
