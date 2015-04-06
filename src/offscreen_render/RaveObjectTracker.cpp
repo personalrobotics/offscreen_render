@@ -18,7 +18,8 @@ namespace offscreen_render
 
     RaveObjectTracker::RaveObjectTracker() :
             numIters(0),
-            needsUpdate(false)
+            needsUpdate(false),
+            cancelThreads(false)
     {
         initialized = false;
         window = NULL;
