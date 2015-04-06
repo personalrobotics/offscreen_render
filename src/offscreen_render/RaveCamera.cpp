@@ -148,8 +148,34 @@ namespace offscreen_render
 
     bool RaveCamera::GetSensorData(OpenRAVE::SensorBase::SensorDataPtr psensordata)
     {
-        // TODO: Implement
-        return false;
+        if(psensordata->GetType() != OpenRAVE::SensorBase::ST_Camera)
+        {
+            RAVELOG_ERROR("Only camera sensor is valid!\n");
+            return false;
+        }
+        else
+        {
+            CameraSensorData* cameraSensor = dynamic_cast<CameraSensorData*>(psensordata.get());
+
+            if(!cameraSensor)
+            {
+                RAVELOG_ERROR("Unable to cast to CameraSensorData.\n");
+                return false;
+            }
+
+            size_t renderSize = renderer.colorBuffer.data.data();
+            size_t imageSize = cameraSensor->vimagedata.size();
+
+            if(renderSize != imageSize)
+            {
+                RAVELOG_ERROR("Expected render size of %lu, but got %lu. Are the resolutions setup up correctly?\n", imageSize, renderSize);
+                return false;
+            }
+
+            std::memcpy(cameraSensor->vimagedata.data(), renderer.colorBuffer.data.data(), renderSize * sizeof(uint8_t));
+            return true;
+        }
+
     }
 
     bool RaveCamera::Supports(OpenRAVE::SensorBase::SensorType type)
