@@ -69,6 +69,7 @@ namespace offscreen_render
             RAVELOG_ERROR("Failed to initialize OpenGL");
             return false;
         }
+
         window = glfwCreateWindow(1, 1, "Object Tracker", NULL, NULL);
 
         if(!window)
