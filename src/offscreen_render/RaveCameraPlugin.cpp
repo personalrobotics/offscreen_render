@@ -1,6 +1,7 @@
 #include <openrave/config.h>
 #include <openrave/openrave.h>
 #include <openrave/plugin.h>
+#include <boost/make_shared.hpp>
 
 #include <offscreen_render/RaveCamera.h>
 

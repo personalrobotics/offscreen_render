@@ -50,6 +50,7 @@ set(SOURCES
     src/offscreen_render/CloudGenerator.cpp
     src/offscreen_render/RaveObjectTracker.cpp
     src/offscreen_render/RaveArmTracker.cpp
+    src/offscreen_render/RaveCamera.cpp
     )
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
@@ -63,5 +64,10 @@ target_link_libraries(test_cpp ${PROJECT_NAME} ${X11_LIBRARIES} ${XLibraries})
 openrave_plugin("object_tracker" src/offscreen_render/Plugin.cpp)
 target_link_libraries("object_tracker"  ${OPENRAVE_LIBRARY_DIRS} ${OPENRAVE_LIBRARIES}  ${OpenRAVE_CORE_LIBRARIES} ${catkin_LIBRARIES} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES}  ${GLEW_LIBRARIES} ${PCL_LIBRARIES} ${X11_LIBRARIES} ${XLibrares})
 target_link_libraries("object_tracker" ${PROJECT_NAME})
+
+openrave_plugin("offscreen_render_camera" src/offscreen_render/RaveCameraPlugin.cpp)
+target_link_libraries("offscreen_render_camera"  ${OPENRAVE_LIBRARY_DIRS} ${OPENRAVE_LIBRARIES}  ${OpenRAVE_CORE_LIBRARIES} ${catkin_LIBRARIES} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES}  ${GLEW_LIBRARIES} ${PCL_LIBRARIES} ${X11_LIBRARIES} ${XLibrares})
+target_link_libraries("offscreen_render_camera" ${PROJECT_NAME})
+
 
 

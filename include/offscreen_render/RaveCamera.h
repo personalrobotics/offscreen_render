@@ -12,11 +12,10 @@
 
 namespace offscreen_render
 {
-
-    class RaveCamera : OpenRAVE::SensorBase
+    class RaveCamera : public OpenRAVE::SensorBase
     {
         public:
-            RaveCamera();
+            RaveCamera(OpenRAVE::EnvironmentBasePtr env);
             virtual ~RaveCamera();
 
             virtual int Configure(OpenRAVE::SensorBase::ConfigureCommand, bool blocking = false);
@@ -29,6 +28,5 @@ namespace offscreen_render
             virtual bool SimulationStep(OpenRAVE::dReal fTimeElapsed);
 
     };
-
 }
 #endif /* RAVECAMERA_H_ */

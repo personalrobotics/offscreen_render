@@ -5,11 +5,13 @@
  *      Author: mklingen
  */
 
+#include <openrave/openrave.h>
 #include <offscreen_render/RaveCamera.h>
 
 namespace offscreen_render
 {
-    RaveCamera::RaveCamera()
+    RaveCamera::RaveCamera(OpenRAVE::EnvironmentBasePtr env) :
+            OpenRAVE::SensorBase(env)
     {
         // TODO Auto-generated constructor stub
 
@@ -34,7 +36,7 @@ namespace offscreen_render
             return OpenRAVE::SensorBase::SensorGeometryPtr();
         }
         //TODO: Impement
-        OpenRAVE::SensorBase::SensorGeometryPtr();
+        return OpenRAVE::SensorBase::SensorGeometryPtr();
     }
 
     OpenRAVE::SensorBase::SensorDataPtr RaveCamera::CreateSensorData(OpenRAVE::SensorBase::SensorType type)
