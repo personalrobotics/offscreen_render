@@ -1,8 +1,8 @@
 uniform mat4 World;
 uniform mat4 View;
 uniform mat4 Projection;
-in vec3 position;
-in vec3 color;
+varying vec3 position;
+varying vec3 color;
 varying vec4 cs_position;
 varying vec4 cs_color;
 

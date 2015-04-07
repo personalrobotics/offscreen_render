@@ -48,12 +48,16 @@ namespace offscreen_render
 
             void Initialize(int width, int height)
             {
+                printf("Initializing a buffer\n");
                 this->width = width;
                 this->height = height;
+
+                printf("Gen frame buffers\n");
                 fboID = 0;
                 glGenFramebuffers(1, &fboID);
                 glBindFramebuffer(GL_FRAMEBUFFER, fboID);
 
+                printf("Gen textures\n");
                 // The texture we're going to render to
                 textureID = 0;
                 glGenTextures(1, &textureID);
@@ -67,15 +71,23 @@ namespace offscreen_render
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
+                printf("Gen depthbuffer\n");
                 depthID = 0;
+
+                printf("Gen render buffer\n");
                 glGenRenderbuffers(1, &depthID);
+                printf("Bind render buffer %d\n", depthID);
                 glBindRenderbuffer(GL_RENDERBUFFER, depthID);
+                printf("Render buffer storage\n");
                 glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+                printf("Frame buffer renderbuffer\n");
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthID);
 
+                printf("Framebuffer texture %d.\n", textureID);
                 // Set "renderedTexture" as our colour attachement #0
-                glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, textureID, 0);
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
 
+                printf("Allocating.\n");
                 data = AllocateData();
 
             }
@@ -121,7 +133,7 @@ namespace offscreen_render
 
             template <typename T, int N> void DrawToBuffer(Shader* shader, FrameBuffer<T, N>* buffer)
             {
-                buffer->Begin();
+                //buffer->Begin();
                 {
                     shader->Begin();
                     {
@@ -139,7 +151,7 @@ namespace offscreen_render
                     }
                     shader->End();
                 }
-                buffer->End();
+                //buffer->End();
             }
 
             void Initialize(int width, int height);

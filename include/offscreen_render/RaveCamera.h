@@ -22,9 +22,16 @@ namespace offscreen_render
             virtual ~RaveCamera();
 
             void SetIntrinsics(float fx, float fy, float cx, float cy);
-
+            void SetSize(int w, int h);
+            void AddKinBody(const std::string& name, float r, float g, float b);
             bool Initialize();
 
+            // Interface Commands
+            bool _SetIntrinsics(std::ostream& out, std::istream& in);
+            bool _SetSize(std::ostream& out, std::istream& in);
+            bool _AddKinBody(std::ostream& out, std::istream& in);
+
+            // Overrides SensorBase
             virtual int Configure(OpenRAVE::SensorBase::ConfigureCommand, bool blocking = false);
             virtual OpenRAVE::SensorBase::SensorGeometryPtr GetSensorGeometry(SensorType type = ST_Invalid);
             virtual SensorDataPtr CreateSensorData(OpenRAVE::SensorBase::SensorType type = ST_Invalid);

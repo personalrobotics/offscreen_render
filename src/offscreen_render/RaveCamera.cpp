@@ -23,6 +23,13 @@ namespace offscreen_render
        geometry.reset(geomData);
        near = 0.01f;
        far = 10.0f;
+
+       RegisterCommand("setintrinsic",boost::bind(&RaveCamera::_SetIntrinsics,this,_1,_2),
+                                "Set the intrinsic parameters of the camera (fx,fy,cx,cy,near,far).");
+       RegisterCommand("setdims",boost::bind(&RaveCamera::_SetSize,this,_1,_2),
+                                "Set the dimensions of the image (width,height)");
+       RegisterCommand("addbody",boost::bind(&RaveCamera::_AddKinBody,this,_1,_2),
+                                "Add a kinbody to the render scene with the given 24 bit color (name, r, g, b)");
     }
 
     RaveCamera::~RaveCamera()
@@ -31,6 +38,59 @@ namespace offscreen_render
         {
             glfwTerminate();
         }
+    }
+
+    void RaveCamera::SetSize(int w, int h)
+    {
+        geomData->width = w;
+        geomData->height = h;
+
+        if (isInitialized)
+        {
+            RAVELOG_WARN("Can't set parameters after the camera is initialized. Please create a new camera.");
+        }
+    }
+
+    bool RaveCamera::_SetIntrinsics(std::ostream& out, std::istream& in)
+    {
+        float fx, fy, cx, cy, n, f;
+        in >> fx >> fy >> cx >> cy >> n >> f;
+        near = n;
+        far = f;
+        SetIntrinsics(fx, fy, cx, cy);
+        return true;
+    }
+
+    bool RaveCamera::_SetSize(std::ostream& out, std::istream& in)
+    {
+        int w, h;
+        in >> w >> h;
+        SetSize(w, h);
+        return true;
+    }
+
+    void RaveCamera::AddKinBody(const std::string& name, float r, float g, float b)
+    {
+        OpenRAVE::KinBodyPtr body = GetEnv()->GetKinBody(name);
+
+        if(body.get())
+        {
+            printf("Adding body %s with color %f %f %f\n", name.c_str(), r, g, b);
+            bridge.CreateModels(*renderer.colorShader, body, OpenRAVE::Vector(r / 255.0f, g / 255.0f, b / 255.0f, 1.0));
+        }
+        else
+        {
+            RAVELOG_ERROR("Couldn't find body with name %s\n", name.c_str());
+        }
+    }
+
+    bool RaveCamera::_AddKinBody(std::ostream& out, std::istream& in)
+    {
+        std::string name;
+        float r, g, b;
+        in >> name >> r >> g >> b;
+        AddKinBody(name, r, g, b);
+        return true;
     }
 
     bool RaveCamera::Initialize()
@@ -43,7 +103,7 @@ namespace offscreen_render
            return false;
        }
 
-       window = glfwCreateWindow(1, 1, "Offscreen Window", NULL, NULL);
+       window = glfwCreateWindow(640, 480, "Offscreen Window", NULL, NULL);
 
        if(!window)
         {
@@ -51,10 +111,9 @@ namespace offscreen_render
             RAVELOG_ERROR("Failed to create offscreen window");
             return false;
         }
-
-        glfwMakeContextCurrent(window);
-        glfwSwapInterval(0);
-        glfwHideWindow(window);
+       glfwMakeContextCurrent(window);
+       glfwSwapInterval(0);
+       //glfwHideWindow(window);
         GLenum err = glewInit();
         if (err != GLEW_OK)
         {
@@ -66,6 +125,13 @@ namespace offscreen_render
             RAVELOG_ERROR("Need GLEW 2.1 or higher.");
             return false;
         }
+
+        if (!GLEW_ARB_framebuffer_object)
+        {
+            RAVELOG_ERROR("Glew does not support framebuffer\n");
+            return false;
+        }
+
 
         std::string shaders = ros::package::getPath("offscreen_render") + "/shaders/";
 
@@ -81,14 +147,18 @@ namespace offscreen_render
             return false;
         }
 
+        RAVELOG_INFO("Done loading shaders.\n");
+
         renderer.depthShader = &depthShader;
         renderer.colorShader = &colorShader;
 
+        RAVELOG_INFO("Initializing\n");
         renderer.Initialize((int)geomData->width, (int)geomData->height);
 
         return true;
 
     }
+
 
     int RaveCamera::Configure(OpenRAVE::SensorBase::ConfigureCommand command, bool blocking)
     {
@@ -121,11 +191,16 @@ namespace offscreen_render
         geomData->KK.fy = fy;
         geomData->KK.cx = cx;
         geomData->KK.cy = cy;
+
+        if (isInitialized)
+        {
+            RAVELOG_WARN("Can't set parameters after the camera is initialized. Please create a new camera.");
+        }
     }
 
     OpenRAVE::SensorBase::SensorGeometryPtr RaveCamera::GetSensorGeometry(SensorType type)
     {
-        if (type != OpenRAVE::SensorBase::ST_Camera)
+        if (type != OpenRAVE::SensorBase::ST_Camera && type != OpenRAVE::SensorBase::ST_Invalid)
         {
             RAVELOG_ERROR("Only camera sensor geometry is valid.\n");
             return OpenRAVE::SensorBase::SensorGeometryPtr();
@@ -135,7 +210,7 @@ namespace offscreen_render
 
     OpenRAVE::SensorBase::SensorDataPtr RaveCamera::CreateSensorData(OpenRAVE::SensorBase::SensorType type)
     {
-        if (type != OpenRAVE::SensorBase::ST_Camera)
+        if (type != OpenRAVE::SensorBase::ST_Camera && type != OpenRAVE::SensorBase::ST_Invalid)
         {
             RAVELOG_ERROR("Only camera sensor geometry is valid.\n");
             return OpenRAVE::SensorBase::SensorDataPtr();
@@ -148,7 +223,7 @@ namespace offscreen_render
 
     bool RaveCamera::GetSensorData(OpenRAVE::SensorBase::SensorDataPtr psensordata)
     {
-        if(psensordata->GetType() != OpenRAVE::SensorBase::ST_Camera)
+        if(psensordata->GetType() != OpenRAVE::SensorBase::ST_Camera && psensordata->GetType() != OpenRAVE::SensorBase::ST_Invalid)
         {
             RAVELOG_ERROR("Only camera sensor is valid!\n");
             return false;
@@ -163,7 +238,7 @@ namespace offscreen_render
                 return false;
             }
 
-            size_t renderSize = renderer.colorBuffer.data.data();
+            size_t renderSize = renderer.colorBuffer.data.size();
             size_t imageSize = cameraSensor->vimagedata.size();
 
             if(renderSize != imageSize)
@@ -195,7 +270,7 @@ namespace offscreen_render
 
     bool RaveCamera::SimulationStep(OpenRAVE::dReal fTimeElapsed)
     {
-        if (isInitialized && isRunning)
+        if (isInitialized && isRunning && geomData->width > 0 && geomData->height > 0)
         {
             glEnable(GL_DEPTH_TEST);
             glDepthFunc(GL_LESS);
@@ -203,6 +278,8 @@ namespace offscreen_render
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
             glfwMakeContextCurrent(window);
+            glfwPollEvents();
+            glViewport(0, 0, 640, 480);
             renderer.projectionMatrix = GetPerspectiveMatrix(geomData->KK.fx, geomData->KK.fy, geomData->KK.cx, geomData->KK.cy, near, far, geomData->width, geomData->height);
             renderer.viewMatrix = GetViewMatrix(ORToTransform(transform));
 
@@ -210,10 +287,15 @@ namespace offscreen_render
             bridge.UpdateModels();
             bridge.GetAllModels(renderer.models);
             renderer.Draw();
+            glfwSwapBuffers(window);
             return true;
         }
+        else if(isInitialized && isRunning && (geomData->width == 0 || geomData->height == 0))
+        {
+            RAVELOG_ERROR("Tried simulating camera that has no size.");
+        }
 
-        return false;
+        return true;
     }
 
 }
