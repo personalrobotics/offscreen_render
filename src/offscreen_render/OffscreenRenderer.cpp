@@ -22,7 +22,7 @@ namespace offscreen_render
     void OffscreenRenderer::Initialize(int width, int height)
     {
         printf("Initializing depth buffer\n");
-        depthBuffer.Initialize(width, height);
+       depthBuffer.Initialize(width, height);
         printf("Initializing color buffer\n");
         colorBuffer.Initialize(width, height);
     }

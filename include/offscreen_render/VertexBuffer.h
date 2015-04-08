@@ -20,6 +20,7 @@ namespace offscreen_render
             void Begin();
             void Draw();
             void End();
+            void DebugDraw();
 
             std::vector<GLfloat> position_data;
             std::vector<GLfloat> color_data;

@@ -103,7 +103,7 @@ namespace offscreen_render
            return false;
        }
 
-       window = glfwCreateWindow(640, 480, "Offscreen Window", NULL, NULL);
+       window = glfwCreateWindow(1, 1, "Offscreen Window", NULL, NULL);
 
        if(!window)
         {
@@ -111,9 +111,9 @@ namespace offscreen_render
             RAVELOG_ERROR("Failed to create offscreen window");
             return false;
         }
+       glfwHideWindow(window);
        glfwMakeContextCurrent(window);
        glfwSwapInterval(0);
-       //glfwHideWindow(window);
         GLenum err = glewInit();
         if (err != GLEW_OK)
         {
@@ -154,7 +154,6 @@ namespace offscreen_render
 
         RAVELOG_INFO("Initializing\n");
         renderer.Initialize((int)geomData->width, (int)geomData->height);
-
         return true;
 
     }
@@ -247,7 +246,10 @@ namespace offscreen_render
                 return false;
             }
 
-            std::memcpy(cameraSensor->vimagedata.data(), renderer.colorBuffer.data.data(), renderSize * sizeof(uint8_t));
+            for (size_t i = 0; i < renderSize; i++)
+            {
+                cameraSensor->vimagedata[i] = static_cast<uint8_t>(renderer.colorBuffer.data.at(i) * 255.0f);
+            }
             return true;
         }
 
@@ -270,29 +272,29 @@ namespace offscreen_render
 
     bool RaveCamera::SimulationStep(OpenRAVE::dReal fTimeElapsed)
     {
-        if (isInitialized && isRunning && geomData->width > 0 && geomData->height > 0)
+        //while (!glfwWindowShouldClose(window))
         {
-            glEnable(GL_DEPTH_TEST);
-            glDepthFunc(GL_LESS);
-            glFrontFace(GL_CCW);
-            glEnable(GL_CULL_FACE);
-            glCullFace(GL_BACK);
-            glfwMakeContextCurrent(window);
-            glfwPollEvents();
-            glViewport(0, 0, 640, 480);
-            renderer.projectionMatrix = GetPerspectiveMatrix(geomData->KK.fx, geomData->KK.fy, geomData->KK.cx, geomData->KK.cy, near, far, geomData->width, geomData->height);
-            renderer.viewMatrix = GetViewMatrix(ORToTransform(transform));
+            if (isInitialized && isRunning && geomData->width > 0 && geomData->height > 0)
+            {
+                glfwMakeContextCurrent(window);
+                glEnable(GL_DEPTH_TEST);
+                glViewport(0, 0, geomData->width, geomData->height);
+                glClearColor(0, 0.0, 0, 1.0);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                renderer.models.clear();
+                bridge.UpdateModels();
+                bridge.GetAllModels(renderer.models);
+                renderer.projectionMatrix = GetPerspectiveMatrix(geomData->KK.fx, geomData->KK.fy, geomData->KK.cx, geomData->KK.cy, near, far, geomData->width, geomData->height);
+                renderer.viewMatrix = GetViewMatrix(ORToTransform(transform));
+                renderer.Draw();
+                //glfwSwapBuffers(window);
+                //glfwPollEvents();
+            }
+            else if(isInitialized && isRunning && (geomData->width == 0 || geomData->height == 0))
+            {
+                RAVELOG_ERROR("Tried simulating camera that has no size.\n");
+            }
 
-            renderer.models.clear();
-            bridge.UpdateModels();
-            bridge.GetAllModels(renderer.models);
-            renderer.Draw();
-            glfwSwapBuffers(window);
-            return true;
-        }
-        else if(isInitialized && isRunning && (geomData->width == 0 || geomData->height == 0))
-        {
-            RAVELOG_ERROR("Tried simulating camera that has no size.");
         }
 
         return true;

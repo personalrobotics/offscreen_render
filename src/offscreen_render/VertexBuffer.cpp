@@ -89,6 +89,20 @@ namespace offscreen_render
 
     }
 
+    void VertexBuffer::DebugDraw()
+    {
+        glDisableClientState(GL_COLOR_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glBegin(GL_TRIANGLES);
+            for (size_t i = 0; i < index_data.size(); i++)
+            {
+                unsigned short idx = index_data.at(i);
+                glVertex3f(position_data[idx * 3 + 0], position_data[idx * 3 + 1], position_data[idx * 3 + 2]);
+                glColor3f(color_data[idx * 3 + 0], color_data[idx * 3 + 1], color_data[idx * 3 + 2]);
+            }
+        glEnd();
+    }
+
     void VertexBuffer::End()
     {
         glDisableVertexAttribArray(positionAttributeID);

@@ -19,7 +19,7 @@ namespace offscreen_render
         pointCloudPublisher = nh.advertise<PointCloud>(topic.c_str(), 1);
     }
 
-    void CloudGenerator::GenerateCloud(const FrameBuffer<float, 3>& buffer, const FrameBuffer<uint8_t, 3>& colorBuffer,  PointCloud::Ptr cloud, const std::string& frame, const float& fx, const float& fy, const float& cx, const float& cy)
+    void CloudGenerator::GenerateCloud(const FrameBuffer<float, 3>& buffer, const FrameBuffer<float, 3>& colorBuffer,  PointCloud::Ptr cloud, const std::string& frame, const float& fx, const float& fy, const float& cx, const float& cy)
     {
         cloud->header.frame_id = frame;
         cloud->header.stamp = ros::Time::now().toNSec();
