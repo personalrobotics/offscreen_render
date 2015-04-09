@@ -22,8 +22,8 @@ namespace offscreen_render
         public:
             void CopyData(std::vector<float>& data)
             {
-                glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboID);
-                glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+                glBindFramebuffer(GL_FRAMEBUFFER, fboID);
+                glReadBuffer(GL_COLOR_ATTACHMENT0);
                 glReadPixels(0, 0, width, height, GL_RGB, GL_FLOAT, data.data());
                 //glGetTexImage(GL_TEXTURE_2D, 0,  GL_RGB, GL_FLOAT, data.data());
             }
