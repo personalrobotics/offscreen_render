@@ -189,7 +189,7 @@ namespace offscreen_render
 
             template <typename T, int N> void DrawToBuffer(Shader* shader, FrameBuffer<T, N>* buffer)
             {
-                buffer->Begin();
+                //buffer->Begin();
                 {
                     shader->Begin();
                     {
@@ -208,7 +208,7 @@ namespace offscreen_render
                     }
                     shader->End();
                 }
-                buffer->End();
+                //buffer->End();
             }
 
             void Initialize(int width, int height);

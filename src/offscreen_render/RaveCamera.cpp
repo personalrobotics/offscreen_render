@@ -103,7 +103,7 @@ namespace offscreen_render
            return false;
        }
 
-       window = glfwCreateWindow(1, 1, "Offscreen Window", NULL, NULL);
+       window = glfwCreateWindow(640, 480, "Offscreen Window", NULL, NULL);
 
        if(!window)
         {
@@ -111,7 +111,7 @@ namespace offscreen_render
             RAVELOG_ERROR("Failed to create offscreen window");
             return false;
         }
-       glfwHideWindow(window);
+       //glfwHideWindow(window);
        glfwMakeContextCurrent(window);
        glfwSwapInterval(0);
         GLenum err = glewInit();
@@ -272,7 +272,7 @@ namespace offscreen_render
 
     bool RaveCamera::SimulationStep(OpenRAVE::dReal fTimeElapsed)
     {
-        //while (!glfwWindowShouldClose(window))
+        while (!glfwWindowShouldClose(window))
         {
             if (isInitialized && isRunning && geomData->width > 0 && geomData->height > 0)
             {
@@ -287,8 +287,8 @@ namespace offscreen_render
                 renderer.projectionMatrix = GetPerspectiveMatrix(geomData->KK.fx, geomData->KK.fy, geomData->KK.cx, geomData->KK.cy, near, far, geomData->width, geomData->height);
                 renderer.viewMatrix = GetViewMatrix(ORToTransform(transform));
                 renderer.Draw();
-                //glfwSwapBuffers(window);
-                //glfwPollEvents();
+                glfwSwapBuffers(window);
+                glfwPollEvents();
             }
             else if(isInitialized && isRunning && (geomData->width == 0 || geomData->height == 0))
             {

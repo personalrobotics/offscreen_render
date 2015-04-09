@@ -15,16 +15,16 @@ namespace offscreen_render
 
     void OffscreenRenderer::Draw()
     {
-        DrawToBuffer(depthShader, &depthBuffer);
+        //DrawToBuffer(depthShader, &depthBuffer);
         DrawToBuffer(colorShader, &colorBuffer);
     }
 
     void OffscreenRenderer::Initialize(int width, int height)
     {
         printf("Initializing depth buffer\n");
-       depthBuffer.Initialize(width, height);
+       //depthBuffer.Initialize(width, height);
         printf("Initializing color buffer\n");
-        colorBuffer.Initialize(width, height);
+        //colorBuffer.Initialize(width, height);
     }
 
 }
