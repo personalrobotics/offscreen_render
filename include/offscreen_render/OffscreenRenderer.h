@@ -20,11 +20,20 @@ namespace offscreen_render
     template <typename DataType, int NumChannels> class FrameBuffer
     {
         public:
+		void checkError(char *str)
+		{
+			GLenum error;
+		 
+			if ((error = glGetError()) != GL_NO_ERROR)
+				printf("GL Error: %s (%s)\n", gluErrorString(error), str);
+		}
+
             void CopyData(std::vector<float>& data)
             {
                 glBindFramebuffer(GL_FRAMEBUFFER, fboID);
                 glReadBuffer(GL_COLOR_ATTACHMENT0);
                 glReadPixels(0, 0, width, height, GL_RGB, GL_FLOAT, data.data());
+		checkError("ReadPixels");
                 //glGetTexImage(GL_TEXTURE_2D, 0,  GL_RGB, GL_FLOAT, data.data());
             }
 
