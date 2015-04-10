@@ -45,16 +45,13 @@ namespace offscreen_render
 
     inline Mat4x4 GetViewMatrix(const Transform& transform)
     {
-        Mat3x3 flipper;
-        flipper << 1, 0, 0,
-                   0, -1, 0,
-                   0, 0, -1;
-        Mat4x4 toReturn = Mat4x4::Identity();
-        toReturn.block(0, 0, 3, 3) = transform.linear();
-        toReturn.block(0, 2, 3, 1) *= -1;
-        toReturn.block(0, 1, 3, 1) *= -1;
-        toReturn.block(0, 3, 3, 1) = transform.translation();
-        return toReturn;
+        Mat4x4 t = Mat4x4::Identity();
+        t.block(0, 3, 3, 1) = -transform.translation();
+        t = t.transpose().eval();
+        t.block(0, 0, 3, 3) = transform.linear();
+        t.block(0, 2, 3, 1) *= -1;
+        t.block(0, 1, 3, 1) *= -1;
+        return t;
     }
 
     inline Mat4x4 GetFrustumMatrix(float left, float right,

@@ -262,6 +262,7 @@ namespace offscreen_render
 
     void RaveCamera::SetTransform(OpenRAVE::Transform const &trans)
     {
+        RAVELOG_INFO("Setting transform");
         transform = trans;
     }
 
@@ -283,11 +284,11 @@ namespace offscreen_render
                 glViewport(0, 0, geomData->width, geomData->height);
                 glClearColor(0.0, 0.0, 0, 1.0);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		//glMatrixMode(GL_PROJECTION);
-		//glLoadIdentity();
-		//glRotatef(15, 0.0, 0.0, 1.0);
-		//glOrtho(-400.0, 400.0, -300.0, 300.0, 200.0, -200.0);
-		//gluPerspective(45,4.0f / 3.0f,0.01,10.0f);
+            //glMatrixMode(GL_PROJECTION);
+            //glLoadIdentity();
+            //glRotatef(15, 0.0, 0.0, 1.0);
+            //glOrtho(-400.0, 400.0, -300.0, 300.0, 200.0, -200.0);
+            //gluPerspective(45,4.0f / 3.0f,0.01,10.0f);
 	        //glMatrixMode( GL_MODELVIEW );
 	        //glLoadIdentity();
 	        //glTranslatef( 0, 0, -1.0f );                     // Translate back 3 units
@@ -296,7 +297,8 @@ namespace offscreen_render
                 bridge.UpdateModels();
                 bridge.GetAllModels(renderer.models);
                 renderer.projectionMatrix = GetPerspectiveMatrix(geomData->KK.fx, geomData->KK.fy, geomData->KK.cx, geomData->KK.cy, near, far, geomData->width, geomData->height);
-                renderer.viewMatrix = GetViewMatrix(ORToTransform(transform));
+                Transform mat = ORToTransform(transform);
+                renderer.viewMatrix = GetViewMatrix(mat);
                 renderer.Draw();
                 //glfwSwapBuffers(window);
                 //glfwPollEvents();
