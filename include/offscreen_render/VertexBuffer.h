@@ -13,6 +13,13 @@ namespace offscreen_render
     class VertexBuffer
     {
         public:
+	    void checkError(const char *str)
+	    {
+		GLenum error;
+	 
+		if ((error = glGetError()) != GL_NO_ERROR)
+			printf("GL Error: %s (%s)\n", gluErrorString(error), str);
+	    }
             VertexBuffer();
             virtual ~VertexBuffer();
 

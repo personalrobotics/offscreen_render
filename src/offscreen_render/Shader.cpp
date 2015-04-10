@@ -30,7 +30,9 @@ namespace offscreen_render
         printf("Creating shaders...\n");
         // Create the shaders
         ProgramID vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+	checkError("glCreateShader");
         ProgramID fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+	checkError("glCreateShader");
 
         printf("Opening vertex shader file...\n");
         // Read the Vertex Shader code from the file
@@ -70,6 +72,7 @@ namespace offscreen_render
         char const * VertexSourcePointer = vertexShaderCode.c_str();
         glShaderSource(vertexShaderID, 1, &VertexSourcePointer, NULL);
         glCompileShader(vertexShaderID);
+	checkError("glCompileShader");
 
         // Check Vertex Shader
         glGetShaderiv(vertexShaderID, GL_COMPILE_STATUS, &result);
@@ -87,6 +90,7 @@ namespace offscreen_render
         char const * FragmentSourcePointer = fragmentShaderCode.c_str();
         glShaderSource(fragmentShaderID, 1, &FragmentSourcePointer, NULL);
         glCompileShader(fragmentShaderID);
+	checkError("glCompileShader");
 
         // Check Fragment Shader
         glGetShaderiv(fragmentShaderID, GL_COMPILE_STATUS, &result);
@@ -102,8 +106,18 @@ namespace offscreen_render
         printf("Linking program\n");
         programID = glCreateProgram();
         glAttachShader(programID, vertexShaderID);
+	checkError("glAttachShader");
         glAttachShader(programID, fragmentShaderID);
+	checkError("glAttachShader");
+
+        glUseProgram(programID);
+        glBindAttribLocation(programID, 0, "position");
+        checkError("glBindAttribLocation");
+        glBindAttribLocation(programID, 1, "color");
+        checkError("glBindAttribLocation");
+
         glLinkProgram(programID);
+	checkError("glLinkProgram");
 
         // Check the program
         glGetProgramiv(programID, GL_LINK_STATUS, &result);
@@ -116,8 +130,11 @@ namespace offscreen_render
         }
 
         projectionMatrixID = glGetUniformLocation(programID, "Projection");
+	checkError("glGetUniformLocation");
         viewMatrixID = glGetUniformLocation(programID, "View");
+	checkError("glGetUniformLocation");
         worldMatrixID = glGetUniformLocation(programID, "World");
+	checkError("glGetUniformLocation");
 
         glDeleteShader(vertexShaderID);
         glDeleteShader(fragmentShaderID);

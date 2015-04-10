@@ -23,34 +23,50 @@ namespace offscreen_render
     void  VertexBuffer::Initialize(const Shader& shader)
     {
         glGenVertexArrays(1, &vertexArrayID);
+	checkError("glGenVertexArrays");
         glBindVertexArray(vertexArrayID);
+	checkError("glBindVertexArray");
 
         glGenBuffers(1, &positionID);
+        checkError("glGenBuffers");
         glBindBuffer(GL_ARRAY_BUFFER, positionID);
-        glBufferData(GL_ARRAY_BUFFER, position_data.size() * sizeof(position_data.data()), position_data.data(), GL_STATIC_DRAW);
+	checkError("glBindBuffer");
+        glBufferData(GL_ARRAY_BUFFER, position_data.size() * sizeof(float), position_data.data(), GL_STATIC_DRAW);
+	printf("Initializing position buffer of size %lu\n", position_data.size() * sizeof(float));
+	checkError("glBufferData");
 
         glGenBuffers(1, &colorID);
+	checkError("glGenBuffers");
         glBindBuffer(GL_ARRAY_BUFFER, colorID);
-        glBufferData(GL_ARRAY_BUFFER, color_data.size() * sizeof(color_data.data()), color_data.data(), GL_STATIC_DRAW);
-
+	checkError("glBindBuffer");
+        glBufferData(GL_ARRAY_BUFFER, color_data.size() * sizeof(float), color_data.data(), GL_STATIC_DRAW);
+	printf("Initializing color buffer of size %lu\n", color_data.size() * sizeof(float));
+	checkError("glBufferData");
 
         glGenBuffers(1, &indexID);
+	checkError("glGenBuffers");
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexID);
+	checkError("glBindBuffer");
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_data.size() * sizeof(unsigned short), index_data.data(), GL_STATIC_DRAW);
+        printf("Initializing index buffer of size %lu\n", index_data.size() * sizeof(float));
+        checkError("glBufferData");
         initialized = true;
 
         positionAttributeID = 0;
         colorAttributeID = 1;
-        glBindAttribLocation(shader.programID, positionAttributeID, "position");
-        glBindAttribLocation(shader.programID, colorAttributeID, "color");
+        printf("Position %d, color %d\n", positionAttributeID, colorAttributeID);
 
     }
 
     void VertexBuffer::Begin()
     {
+        glBindVertexArray(vertexArrayID);
+        checkError("glBindVertexArray");
         // 1rst attribute buffer : vertices
         glEnableVertexAttribArray(positionAttributeID);
+        checkError("glEnableVertexAttribArray");
         glBindBuffer(GL_ARRAY_BUFFER, positionID);
+        checkError("glBindBuffer");
         glVertexAttribPointer(
             positionAttributeID,                  // attribute. No particular reason for 0, but must match the layout in the shader.
             3,                  // size
@@ -59,10 +75,13 @@ namespace offscreen_render
             0,                  // stride
             (void*)0            // array buffer offset
         );
+        checkError("glVertexAttribPointer");
 
         // 2nd attribute buffer : colors
         glEnableVertexAttribArray(colorAttributeID);
+	checkError("glEnableVertexAttribArray");
         glBindBuffer(GL_ARRAY_BUFFER, colorID);
+	checkError("glBindBuffer");
         glVertexAttribPointer(
             colorAttributeID,                                // attribute. No particular reason for 1, but must match the layout in the shader.
             3,                                // size
@@ -71,9 +90,10 @@ namespace offscreen_render
             0,                                // stride
             (void*)0                          // array buffer offset
         );
-
+	checkError("glVertexAttribPointer");
         // Index buffer
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexID);
+	checkError("glBindBuffer");
 
     }
 
@@ -86,6 +106,7 @@ namespace offscreen_render
             GL_UNSIGNED_SHORT,   // type
             (void*)0           // element array buffer offset
         );
+        checkError("glDrawElements");
 
     }
 

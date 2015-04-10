@@ -1,6 +1,7 @@
-varying vec4 cs_position;
-varying vec4 cs_color;
+#version 130
+in vec4 cs_color;
+out vec4 fragColor;
 void main()
 {
-    gl_FragColor = cs_color;
+    fragColor = cs_color;
 }

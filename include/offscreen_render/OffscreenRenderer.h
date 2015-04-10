@@ -5,6 +5,7 @@
 #include "VertexBuffer.h"
 #include <map>
 #include <vector>
+#include <iostream>
 
 namespace offscreen_render
 {
@@ -20,14 +21,13 @@ namespace offscreen_render
     template <typename DataType, int NumChannels> class FrameBuffer
     {
         public:
-		void checkError(char *str)
-		{
-			GLenum error;
-		 
-			if ((error = glGetError()) != GL_NO_ERROR)
-				printf("GL Error: %s (%s)\n", gluErrorString(error), str);
-		}
-
+	    void checkError(const char *str)
+	    {
+		GLenum error;
+	 
+		if ((error = glGetError()) != GL_NO_ERROR)
+			printf("GL Error: %s (%s)\n", gluErrorString(error), str);
+	    }
             void CopyData(std::vector<float>& data)
             {
                 glBindFramebuffer(GL_FRAMEBUFFER, fboID);
@@ -69,17 +69,21 @@ namespace offscreen_render
                 fboID = 0;
                 glGenFramebuffers(1, &fboID);
                 glBindFramebuffer(GL_FRAMEBUFFER, fboID);
+		checkError("glBindFramebuffer");
 
                 printf("Gen textures\n");
                 // The texture we're going to render to
                 textureID = 0;
                 glGenTextures(1, &textureID);
+		checkError("glGenTextures");
 
                 // "Bind" the newly created texture : all future texture functions will modify this texture
                 glBindTexture(GL_TEXTURE_2D, textureID);
+		checkError("glBindTexture");
 
                 // Give an empty image to OpenGL ( the last "0" )
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, 0);
+		checkError("glTexImage");
 
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -89,16 +93,21 @@ namespace offscreen_render
 
                 printf("Gen render buffer\n");
                 glGenRenderbuffers(1, &depthID);
+		checkError("glGenRenderbuffers");
                 printf("Bind render buffer %d\n", depthID);
                 glBindRenderbuffer(GL_RENDERBUFFER, depthID);
+		checkError("glBindRenderbuffer");
                 printf("Render buffer storage\n");
                 glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+		checkError("glRenderbufferStorage");
                 printf("Frame buffer renderbuffer\n");
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthID);
+		checkError("glFramebufferRenderbuffer");
 
                 printf("Framebuffer texture %d.\n", textureID);
                 // Set "renderedTexture" as our colour attachement #0
                 glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
+		checkError("glFramebufferTexture");
 
                 printf("Allocating.\n");
                 data = AllocateData();
@@ -198,13 +207,12 @@ namespace offscreen_render
 
             template <typename T, int N> void DrawToBuffer(Shader* shader, FrameBuffer<T, N>* buffer)
             {
-                //buffer->Begin();
+                buffer->Begin();
                 {
                     shader->Begin();
                     {
                         shader->SetProjectionMatrix(projectionMatrix);
                         shader->SetViewMatrix(viewMatrix);
-
                         for (const Model& model : models)
                         {
                             shader->SetWorldMatrix(Mat4x4(model.transform.transpose()));
@@ -217,7 +225,7 @@ namespace offscreen_render
                     }
                     shader->End();
                 }
-                //buffer->End();
+                buffer->End();
             }
 
             void Initialize(int width, int height);

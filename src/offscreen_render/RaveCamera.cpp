@@ -103,7 +103,7 @@ namespace offscreen_render
            return false;
        }
 
-       window = glfwCreateWindow(640, 480, "Offscreen Window", NULL, NULL);
+       window = glfwCreateWindow(1, 1, "Offscreen Window", NULL, NULL);
 
        if(!window)
         {
@@ -111,7 +111,7 @@ namespace offscreen_render
             RAVELOG_ERROR("Failed to create offscreen window");
             return false;
         }
-       //glfwHideWindow(window);
+       glfwHideWindow(window);
        glfwMakeContextCurrent(window);
        glfwSwapInterval(0);
         GLenum err = glewInit();
@@ -272,23 +272,34 @@ namespace offscreen_render
 
     bool RaveCamera::SimulationStep(OpenRAVE::dReal fTimeElapsed)
     {
-        while (!glfwWindowShouldClose(window))
+	//float alpha = 0.0f;
+        //while (!glfwWindowShouldClose(window))
         {
             if (isInitialized && isRunning && geomData->width > 0 && geomData->height > 0)
             {
+                //alpha += 0.01f;
                 glfwMakeContextCurrent(window);
                 glEnable(GL_DEPTH_TEST);
                 glViewport(0, 0, geomData->width, geomData->height);
-                glClearColor(0, 0.0, 0, 1.0);
+                glClearColor(0.0, 0.0, 0, 1.0);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//glMatrixMode(GL_PROJECTION);
+		//glLoadIdentity();
+		//glRotatef(15, 0.0, 0.0, 1.0);
+		//glOrtho(-400.0, 400.0, -300.0, 300.0, 200.0, -200.0);
+		//gluPerspective(45,4.0f / 3.0f,0.01,10.0f);
+	        //glMatrixMode( GL_MODELVIEW );
+	        //glLoadIdentity();
+	        //glTranslatef( 0, 0, -1.0f );                     // Translate back 3 units
+	        //glRotatef(alpha, 1.0f, 1.0f, 1.0f );        // Rotate on all 3 axis
                 renderer.models.clear();
                 bridge.UpdateModels();
                 bridge.GetAllModels(renderer.models);
                 renderer.projectionMatrix = GetPerspectiveMatrix(geomData->KK.fx, geomData->KK.fy, geomData->KK.cx, geomData->KK.cy, near, far, geomData->width, geomData->height);
                 renderer.viewMatrix = GetViewMatrix(ORToTransform(transform));
                 renderer.Draw();
-                glfwSwapBuffers(window);
-                glfwPollEvents();
+                //glfwSwapBuffers(window);
+                //glfwPollEvents();
             }
             else if(isInitialized && isRunning && (geomData->width == 0 || geomData->height == 0))
             {

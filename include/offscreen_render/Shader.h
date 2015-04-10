@@ -14,6 +14,14 @@ namespace offscreen_render
     class Shader
     {
         public:
+	    void checkError(const char *str)
+	    {
+		GLenum error;
+	 
+		if ((error = glGetError()) != GL_NO_ERROR)
+			printf("GL Error: %s (%s)\n", gluErrorString(error), str);
+	    }
+
             Shader();
             virtual ~Shader();
 
@@ -22,6 +30,7 @@ namespace offscreen_render
             {
                 // Use our shader
                 glUseProgram(programID);
+		checkError("glUseProgram");
             }
 
             inline void End()
@@ -33,6 +42,7 @@ namespace offscreen_render
             {
                 Mat4x4 data = matrix.transpose().eval();
                 glUniformMatrix4fv(param, 1, GL_FALSE, data.data());
+		checkError("glUniformMatrix4fv");
             }
 
             inline void SetProjectionMatrix(const Mat4x4& matrix)
