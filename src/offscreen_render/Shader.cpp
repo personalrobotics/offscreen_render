@@ -30,9 +30,9 @@ namespace offscreen_render
         printf("Creating shaders...\n");
         // Create the shaders
         ProgramID vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-	checkError("glCreateShader");
+        checkError("glCreateShader");
         ProgramID fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-	checkError("glCreateShader");
+        checkError("glCreateShader");
 
         printf("Opening vertex shader file...\n");
         // Read the Vertex Shader code from the file
@@ -110,7 +110,6 @@ namespace offscreen_render
         glAttachShader(programID, fragmentShaderID);
 	checkError("glAttachShader");
 
-        glUseProgram(programID);
         glBindAttribLocation(programID, 0, "position");
         checkError("glBindAttribLocation");
         glBindAttribLocation(programID, 1, "color");

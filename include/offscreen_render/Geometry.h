@@ -30,28 +30,51 @@ namespace offscreen_render
             float near, float far,
             float width, float height)
     {
-        float aspect = width / height;
-
         Mat4x4 Result = Mat4x4::Zero();
         Result(0, 0) =  2. * fx / width;
-        Result(1, 1) = 2. * fy / height;
-        Result(0, 2) =  2. * (0.5f - cx / width);
-        Result(1, 2) =2. * (cy / height - 0.5f);
+        Result(1, 1) =  2. * fy / height;
+        //Result(2, 1) =  2. * (0.5f - cx / width);
+        //Result(2, 0) =  2. * (cy / height - 0.5f);
         Result(2, 2) = - (far + near) / (far - near);
-        Result(2, 3) = - 1.0;
-        Result(3, 2) = - (2.0 * far * near) / (far - near);
+        Result(3, 2) = - 1.0;
+        Result(2, 3) = - (2.0 * far * near) / (far - near);
+
         return Result;
     }
 
     inline Mat4x4 GetViewMatrix(const Transform& transform)
     {
-        Mat4x4 t = Mat4x4::Identity();
+        Vec3 d = transform.linear().block(0, 2, 3, 1);
+        Vec3 z = -d / d.norm();
+        Vec3 up = -transform.linear().block(0, 1, 3, 1);
+        Vec3 x = d.cross(up);
+        x.normalize();
+        Vec3 y = z.cross(x);
+        Vec3 t = transform.translation();
+        Mat4x4 tf = Mat4x4::Identity();
+        tf.block(0, 0, 3, 1) = x;
+        tf.block(0, 1, 3, 1) = y;
+        tf.block(0, 2, 3, 1) = z;
+        tf.block(0, 3, 3, 1) = t;
+        Mat4x4 view =  tf.inverse().eval();
+        return view;
+
+        //return transform.matrix();
+        /*
+        Transform t;
+  	    Quaternion q = Quaternion(transform.rotation()).conjugate();
+        t.linear() = q.toRotationMatrix();
+        t.translation() = -(t.linear() * transform.translation());
+        */
+
+        /*
         t.block(0, 3, 3, 1) = -transform.translation();
         t = t.transpose().eval();
         t.block(0, 0, 3, 3) = transform.linear();
         t.block(0, 2, 3, 1) *= -1;
         t.block(0, 1, 3, 1) *= -1;
-        return t;
+        */
+        //return t.matrix();
     }
 
     inline Mat4x4 GetFrustumMatrix(float left, float right,
@@ -72,17 +95,19 @@ namespace offscreen_render
     {
         float rad = fovYDegrees / 360.0f * M_PI;
 
-        float tanHalfFovy = tan(rad * 0.5f);
+        float theta = rad*0.5;
+        float range = zFar - zNear;
+        float invtan = 1./tan(theta);
 
-        Mat4x4 Result = Mat4x4::Zero();
-        Result(0, 0) = 1.0f / (aspect * tanHalfFovy);
-        Result(1, 1) = 1.0f  / (tanHalfFovy);
-        Result(2, 2) = - (zFar + zNear) / (zFar - zNear);
-        Result(2, 3) = - 1.0;
-        Result(3, 2) = - (2.0 * zFar * zNear) / (zFar - zNear);
-        return Result;
+        Mat4x4 p = Mat4x4::Zero();
+        p(0,0) = invtan / aspect;
+        p(1,1) = invtan;
+        p(2,2) = -(zNear + zFar) / range;
+        p(3,2) = -1;
+        p(2,3) = -2 * zNear * zFar / range;
+        p(3,3) = 0;
 
-
+        return p;
     }
 
     inline Mat4x4 GetLookAt(Vec3 eye, Vec3 center, Vec3 up)

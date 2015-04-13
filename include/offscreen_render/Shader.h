@@ -40,8 +40,7 @@ namespace offscreen_render
 
             inline void  SetMatrixParam(const ParamID& param, const Mat4x4& matrix)
             {
-                Mat4x4 data = matrix.transpose().eval();
-                glUniformMatrix4fv(param, 1, GL_FALSE, data.data());
+                glUniformMatrix4fv(param, 1, GL_FALSE, matrix.data());
                 checkError("glUniformMatrix4fv");
             }
 

@@ -18,29 +18,29 @@ namespace offscreen_render
             Mat4x4 transform;
     };
 
-    template <typename DataType, int NumChannels> class FrameBuffer
+    template<typename DataType, int NumChannels> class FrameBuffer
     {
         public:
-	    void checkError(const char *str)
-	    {
-		GLenum error;
-	 
-		if ((error = glGetError()) != GL_NO_ERROR)
-			printf("GL Error: %s (%s)\n", gluErrorString(error), str);
-	    }
+            void checkError(const char *str)
+            {
+                GLenum error;
+                if ((error = glGetError()) != GL_NO_ERROR)
+                    fprintf(stderr, "GL Error: %s (%s)\n", gluErrorString(error), str);
+            }
+
             void CopyData(std::vector<float>& data)
             {
                 glBindFramebuffer(GL_FRAMEBUFFER, fboID);
                 glReadBuffer(GL_COLOR_ATTACHMENT0);
                 glReadPixels(0, 0, width, height, GL_RGB, GL_FLOAT, data.data());
-		checkError("ReadPixels");
+                checkError("ReadPixels");
                 //glGetTexImage(GL_TEXTURE_2D, 0,  GL_RGB, GL_FLOAT, data.data());
             }
 
             void CopyData(std::vector<uint8_t>& data)
             {
                 glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboID);
-                glGetTexImage(GL_TEXTURE_2D, 0,   GL_RGB, GL_UNSIGNED_BYTE, data.data());
+                glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, data.data());
             }
 
             FrameBuffer()
@@ -61,55 +61,45 @@ namespace offscreen_render
 
             void Initialize(int width, int height)
             {
-                printf("Initializing a buffer\n");
                 this->width = width;
                 this->height = height;
 
-                printf("Gen frame buffers\n");
                 fboID = 0;
                 glGenFramebuffers(1, &fboID);
                 glBindFramebuffer(GL_FRAMEBUFFER, fboID);
-		checkError("glBindFramebuffer");
+                checkError("glBindFramebuffer");
 
-                printf("Gen textures\n");
                 // The texture we're going to render to
                 textureID = 0;
                 glGenTextures(1, &textureID);
-		checkError("glGenTextures");
+                checkError("glGenTextures");
 
                 // "Bind" the newly created texture : all future texture functions will modify this texture
                 glBindTexture(GL_TEXTURE_2D, textureID);
-		checkError("glBindTexture");
+                checkError("glBindTexture");
 
                 // Give an empty image to OpenGL ( the last "0" )
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, 0);
-		checkError("glTexImage");
+                checkError("glTexImage");
 
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-                printf("Gen depthbuffer\n");
                 depthID = 0;
 
-                printf("Gen render buffer\n");
                 glGenRenderbuffers(1, &depthID);
-		checkError("glGenRenderbuffers");
-                printf("Bind render buffer %d\n", depthID);
+                checkError("glGenRenderbuffers");
                 glBindRenderbuffer(GL_RENDERBUFFER, depthID);
-		checkError("glBindRenderbuffer");
-                printf("Render buffer storage\n");
+                checkError("glBindRenderbuffer");
                 glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-		checkError("glRenderbufferStorage");
-                printf("Frame buffer renderbuffer\n");
+                checkError("glRenderbufferStorage");
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthID);
-		checkError("glFramebufferRenderbuffer");
+                checkError("glFramebufferRenderbuffer");
 
-                printf("Framebuffer texture %d.\n", textureID);
                 // Set "renderedTexture" as our colour attachement #0
                 glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
-		checkError("glFramebufferTexture");
+                checkError("glFramebufferTexture");
 
-                printf("Allocating.\n");
                 data = AllocateData();
 
             }
@@ -121,22 +111,21 @@ namespace offscreen_render
                 return toReturn;
             }
 
-
             void Begin()
             {
                 // Set the list of draw buffers.
-                GLenum drawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+                GLenum drawBuffers[1] =
+                { GL_COLOR_ATTACHMENT0 };
                 glDrawBuffers(1, drawBuffers); // "1" is the size of DrawBuffers
                 // Render to our framebuffer
-                printf("Binding to framebuffer %d with viewport %d %d\n", fboID, width, height);
                 glBindFramebuffer(GL_FRAMEBUFFER, fboID);
                 // Always check that our framebuffer is ok
                 GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-                if(status != GL_FRAMEBUFFER_COMPLETE)
+                if (status != GL_FRAMEBUFFER_COMPLETE)
                 {
-                    switch(status)
+                    switch (status)
                     {
-                    printf("Something wrong with framebuffer!\n");
+                        printf("Something wrong with framebuffer!\n");
                     case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
                         printf("An attachment could not be bound to frame buffer object!");
                         break;
@@ -165,8 +154,9 @@ namespace offscreen_render
                         printf("All images must have the same number of multisample samples.");
                         break;
 
-                    case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS :
-                        printf("If a layered image is attached to one attachment, then all attachments must be layered attachments. The attached layers do not have to have the same number of layers, nor do the layers have to come from the same kind of texture.");
+                    case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+                        printf(
+                                "If a layered image is attached to one attachment, then all attachments must be layered attachments. The attached layers do not have to have the same number of layers, nor do the layers have to come from the same kind of texture.");
                         break;
 
                     case GL_FRAMEBUFFER_UNSUPPORTED:
@@ -205,27 +195,32 @@ namespace offscreen_render
 
             void Draw();
 
-            template <typename T, int N> void DrawToBuffer(Shader* shader, FrameBuffer<T, N>* buffer)
+            template<typename T, int N> void DrawToBuffer(Shader* shader, FrameBuffer<T, N>* buffer)
             {
                 buffer->Begin();
                 {
-                    shader->Begin();
-                    {
-                        shader->SetProjectionMatrix(projectionMatrix);
-                        shader->SetViewMatrix(viewMatrix);
-                        for (const Model& model : models)
-                        {
-                            shader->SetWorldMatrix(Mat4x4(model.transform.transpose()));
-                            model.buffer->Begin();
-                            {
-                                model.buffer->Draw();
-                            }
-                            model.buffer->End();
-                        }
-                    }
-                    shader->End();
+                    Draw(shader);
                 }
                 buffer->End();
+            }
+
+            void Draw(Shader* shader)
+            {
+                shader->Begin();
+                {
+                    shader->SetProjectionMatrix(projectionMatrix);
+                    shader->SetViewMatrix(viewMatrix);
+                    for (const Model& model : models)
+                    {
+                        shader->SetWorldMatrix(Mat4x4(model.transform));
+                        model.buffer->Begin();
+                        {
+                            model.buffer->Draw();
+                        }
+                        model.buffer->End();
+                    }
+                }
+                shader->End();
             }
 
             void Initialize(int width, int height);
