@@ -19,7 +19,7 @@ namespace offscreen_render
         switch(renderMode)
         {
             case Offscreen:
-                //DrawToBuffer(depthShader, &depthBuffer);
+                DrawToBuffer(depthShader, &depthBuffer);
                 DrawToBuffer(colorShader, &colorBuffer);
                 break;
             case Onscreen:
