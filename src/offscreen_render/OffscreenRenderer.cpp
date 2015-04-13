@@ -6,6 +6,7 @@ namespace offscreen_render
     {
         depthShader = 0x0;
         colorShader = 0x0;
+        renderMode = OffscreenRenderer::Offscreen;
     }
 
     OffscreenRenderer::~OffscreenRenderer()
@@ -15,8 +16,17 @@ namespace offscreen_render
 
     void OffscreenRenderer::Draw()
     {
-        //DrawToBuffer(depthShader, &depthBuffer);
-        DrawToBuffer(colorShader, &colorBuffer);
+        switch(renderMode)
+        {
+            case Offscreen:
+                //DrawToBuffer(depthShader, &depthBuffer);
+                DrawToBuffer(colorShader, &colorBuffer);
+                break;
+            case Onscreen:
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                Draw(colorShader);
+                break;
+        }
     }
 
     void OffscreenRenderer::Initialize(int width, int height)

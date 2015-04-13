@@ -143,6 +143,7 @@ int main(void)
 
     renderer.depthShader = &depthShader;
     renderer.colorShader = &colorShader;
+    renderer.renderMode = OffscreenRenderer::Onscreen;
     renderer.Initialize(width, height);
 
     Model cube;

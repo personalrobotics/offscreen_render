@@ -190,6 +190,12 @@ namespace offscreen_render
     class OffscreenRenderer
     {
         public:
+            enum RenderMode
+            {
+                Onscreen,
+                Offscreen
+            };
+
             OffscreenRenderer();
             virtual ~OffscreenRenderer();
 
@@ -232,6 +238,7 @@ namespace offscreen_render
             std::vector<Model> models;
             Mat4x4 projectionMatrix;
             Mat4x4 viewMatrix;
+            RenderMode renderMode;
     };
 
 }
