@@ -85,7 +85,9 @@ namespace offscreen_render
 
         if (body.get())
         {
-            std::remove(bridge.bodies.begin(), bridge.bodies.end(), body);
+            auto bodies_end = std::remove(bridge.bodies.begin(), bridge.bodies.end(), body);
+            bridge.bodies.erase(bodies_end);
+
             auto end = std::remove_if
             (
                     bridge.models.begin(), bridge.models.end(),
