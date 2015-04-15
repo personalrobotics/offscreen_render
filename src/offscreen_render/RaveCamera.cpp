@@ -24,6 +24,8 @@ namespace offscreen_render
         RegisterCommand("setintrinsic", boost::bind(&RaveCamera::_SetIntrinsics, this, _1, _2), "Set the intrinsic parameters of the camera (fx,fy,cx,cy,near,far).");
         RegisterCommand("setdims", boost::bind(&RaveCamera::_SetSize, this, _1, _2), "Set the dimensions of the image (width,height)");
         RegisterCommand("addbody", boost::bind(&RaveCamera::_AddKinBody, this, _1, _2), "Add a kinbody to the render scene with the given 24 bit color (name, r, g, b)");
+        RegisterCommand("removebody", boost::bind(&RaveCamera::_RemoveKinBody, this, _1, _2), "remove a kinbody with (name)");
+        RegisterCommand("clearbodies", boost::bind(&RaveCamera::_ClearBodies, this, _1, _2), "clear all kinbodies");
     }
 
     RaveCamera::~RaveCamera()
@@ -75,6 +77,49 @@ namespace offscreen_render
         {
             RAVELOG_ERROR("Couldn't find body with name %s\n", name.c_str());
         }
+    }
+
+    void RaveCamera::RemoveKinBody(const std::string& name)
+    {
+        OpenRAVE::KinBodyPtr body = GetEnv()->GetKinBody(name);
+
+        if (body.get())
+        {
+            std::remove(bridge.bodies.begin(), bridge.bodies.end(), body);
+            auto end = std::remove_if
+            (
+                    bridge.models.begin(), bridge.models.end(),
+                    [body](const offscreen_render::RaveBridge::RaveModel& model)
+                    {
+                        return model.body == body;
+                    }
+            );
+            bridge.models.erase(end);
+        }
+        else
+        {
+            RAVELOG_ERROR("Couldn't find body with name %s\n", name.c_str());
+        }
+    }
+
+    void RaveCamera::ClearBodies()
+    {
+        bridge.models.clear();
+        bridge.bodies.clear();
+    }
+
+    bool RaveCamera::_RemoveKinBody(std::ostream& out, std::istream& in)
+    {
+        std::string name;
+        in >> name;
+        RemoveKinBody(name);
+        return true;
+    }
+
+    bool RaveCamera::_ClearBodies(std::ostream& out, std::istream& in)
+    {
+        ClearBodies();
+        return true;
     }
 
     bool RaveCamera::_AddKinBody(std::ostream& out, std::istream& in)
