@@ -49,6 +49,8 @@ int main(int argc, char** argv)
 #include <offscreen_render/Geometry.h>
 #include <offscreen_render/Conversions.h>
 #include <offscreen_render/OffscreenRenderer.h>
+#include <openrave-core.h>
+#include <offscreen_render/RaveCamera2ROS.h>
 #include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include <ros/package.h>
@@ -88,6 +90,9 @@ void DrawSceneFixed(float aspect)
 using namespace offscreen_render;
 int main(void)
 {
+    OpenRAVE::RaveInitialize(true);
+    OpenRAVE::EnvironmentBasePtr environment = OpenRAVE::RaveCreateEnvironment();
+    RaveCamera2ROS cam(environment);
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);
     if (!glfwInit())

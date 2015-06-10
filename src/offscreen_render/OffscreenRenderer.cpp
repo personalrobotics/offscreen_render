@@ -19,8 +19,8 @@ namespace offscreen_render
         switch(renderMode)
         {
             case Offscreen:
-                DrawToBuffer(depthShader, &depthBuffer);
                 DrawToBuffer(colorShader, &colorBuffer);
+                DrawToBuffer(depthShader, &depthBuffer);
                 break;
             case Onscreen:
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);

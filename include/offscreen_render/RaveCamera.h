@@ -21,12 +21,12 @@ namespace offscreen_render
             RaveCamera(OpenRAVE::EnvironmentBasePtr env);
             virtual ~RaveCamera();
 
-            void SetIntrinsics(float fx, float fy, float cx, float cy);
-            void SetSize(int w, int h);
-            void AddKinBody(const std::string& name, float r, float g, float b);
-            void RemoveKinBody(const std::string& name);
-            void ClearBodies();
-            bool Initialize();
+            virtual void SetIntrinsics(float fx, float fy, float cx, float cy);
+            virtual void SetSize(int w, int h);
+            virtual void AddKinBody(const std::string& name, float r, float g, float b);
+            virtual void RemoveKinBody(const std::string& name);
+            virtual void ClearBodies();
+            virtual bool Initialize();
 
             // Interface Commands
             bool _SetIntrinsics(std::ostream& out, std::istream& in);
@@ -58,7 +58,6 @@ namespace offscreen_render
             Shader colorShader;
             float near;
             float far;
-
     };
 }
 #endif /* RAVECAMERA_H_ */

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 find_package(catkin REQUIRED) 
-catkin_package()
+catkin_package(INCLUDE_DIRS include
+    CATKIN_DEPENDS std_msgs sensor_msgs geometry_msgs
+    LIBRARIES ${PROJECT_NAME})
+
 catkin_python_setup()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/cmake)
 find_package(OpenRAVE REQUIRED)
@@ -24,11 +27,6 @@ find_package(catkin REQUIRED COMPONENTS
     pcl_ros
     )
 
-catkin_package(
-    INCLUDE_DIRS include
-    CATKIN_DEPENDS std_msgs sensor_msgs geometry_msgs
-)
-
 install(DIRECTORY include/${PROJECT_NAME}/
  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
  FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
@@ -42,7 +40,6 @@ FILES_MATCHING PATTERN "*.glsl"
 set( CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
 set(SOURCES
-    src/offscreen_render/test_cpp.cpp
     src/offscreen_render/ROSCamera.cpp
     src/offscreen_render/Shader.cpp
     src/offscreen_render/VertexBuffer.cpp
@@ -51,6 +48,7 @@ set(SOURCES
     src/offscreen_render/RaveObjectTracker.cpp
     src/offscreen_render/RaveArmTracker.cpp
     src/offscreen_render/RaveCamera.cpp
+    src/offscreen_render/RaveCamera2ROS.cpp
     )
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})

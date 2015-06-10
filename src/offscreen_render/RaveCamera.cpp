@@ -135,6 +135,8 @@ namespace offscreen_render
 
     bool RaveCamera::Initialize()
     {
+        if (isInitialized) return true;
+
         isInitialized = true;
 
         if (!glfwInit())

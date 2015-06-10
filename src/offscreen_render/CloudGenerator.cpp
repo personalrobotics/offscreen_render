@@ -37,12 +37,12 @@ namespace offscreen_render
                 {
                     const float& x = buffer.data[i * 3 + 0];
                     const float& y = buffer.data[i * 3 + 1];
-                    point.x = x - 0.02f;
+                    point.x = x;
                     point.y = y;
-                    point.z = z + 0.005f;
-                    point.r = colorBuffer.data[i * 3 + 0];
-                    point.g = colorBuffer.data[i * 3 + 1];
-                    point.b = colorBuffer.data[i * 3 + 2];
+                    point.z = z;
+                    point.r = static_cast<uint8_t>(255 * colorBuffer.data[i * 3 + 0]);
+                    point.g = static_cast<uint8_t>(255 * colorBuffer.data[i * 3 + 1]);
+                    point.b = static_cast<uint8_t>(255 * colorBuffer.data[i * 3 + 2]);
                     point.a = 255;
                     cloud->points.push_back(point);
                 }
