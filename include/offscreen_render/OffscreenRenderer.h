@@ -25,22 +25,82 @@ namespace offscreen_render
             {
                 GLenum error;
                 if ((error = glGetError()) != GL_NO_ERROR)
+                {
                     fprintf(stderr, "GL Error: %s (%s)\n", gluErrorString(error), str);
+                    throw -1;
+                }
+            }
+
+            void checkFramebufferError(GLenum status)
+            {
+                if (status != GL_FRAMEBUFFER_COMPLETE)
+                {
+                    switch (status)
+                    {
+                        fprintf(stderr,"Something wrong with framebuffer!\n");
+                    case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+                        fprintf(stderr,"An attachment could not be bound to frame buffer object!");
+                        break;
+
+                    case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+                        fprintf(stderr,"Attachments are missing! At least one image (texture) must be bound to the frame buffer object!");
+                        break;
+
+                    case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
+                        fprintf(stderr,"The dimensions of the buffers attached to the currently used frame buffer object do not match!");
+                        break;
+
+                    case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
+                        fprintf(stderr,"The formats of the currently used frame buffer object are not supported or do not fit together!");
+                        break;
+
+                    case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+                        fprintf(stderr,"A Draw buffer is incomplete or undefinied. All draw buffers must specify attachment points that have images attached.");
+                        break;
+
+                    case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
+                        fprintf(stderr,"A Read buffer is incomplete or undefinied. All read buffers must specify attachment points that have images attached.");
+                        break;
+
+                    case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+                        fprintf(stderr,"All images must have the same number of multisample samples.");
+                        break;
+
+                    case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+                        fprintf(stderr,
+                                "If a layered image is attached to one attachment, then all attachments must be layered attachments. The attached layers do not have to have the same number of layers, nor do the layers have to come from the same kind of texture.");
+                        break;
+
+                    case GL_FRAMEBUFFER_UNSUPPORTED:
+                        fprintf(stderr,"Attempt to use an unsupported format combinaton!");
+                        break;
+
+                    default:
+                        fprintf(stderr,"Unknown error while attempting to create frame buffer object! Error: %u ID: %u", status, fboID);
+                        break;
+                    }
+                    fprintf(stderr,"\n");
+                    throw -1;
+                }
             }
 
             void CopyData(std::vector<float>& data)
             {
                 glBindFramebuffer(GL_FRAMEBUFFER, fboID);
+                checkError("glBindFramebuffer");
                 glReadBuffer(GL_COLOR_ATTACHMENT0);
+                checkError("glReadBuffer");
                 glReadPixels(0, 0, width, height, GL_RGB, GL_FLOAT, data.data());
-                checkError("ReadPixels");
+                checkError("glReadPixels");
                 //glGetTexImage(GL_TEXTURE_2D, 0,  GL_RGB, GL_FLOAT, data.data());
             }
 
             void CopyData(std::vector<uint8_t>& data)
             {
                 glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboID);
+                checkError("glBindFramebuffer");
                 glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, data.data());
+                checkError("glGetTexImage");
             }
 
             FrameBuffer()
@@ -55,8 +115,42 @@ namespace offscreen_render
             ~FrameBuffer()
             {
                 glDeleteFramebuffers(1, &fboID);
+                checkError("glDeleteFramebuffers");
                 glDeleteTextures(1, &textureID);
+                checkError("glDeleteTextures");
                 glDeleteRenderbuffers(1, &depthID);
+                checkError("glDeleteRenderbuffers");
+            }
+
+            GLboolean QueryExtension(const char *extName)
+            {
+                /*
+                ** Search for extName in the extensions string. Use of strstr()
+                ** is not sufficient because extension names can be prefixes of
+                ** other extension names. Could use strtok() but the constant
+                ** string returned by glGetString might be in read-only memory.
+                */
+                char *p;
+                char *end;
+                int extNameLen;
+
+                extNameLen = strlen(extName);
+
+                p = (char *)glGetString(GL_EXTENSIONS);
+                if (NULL == p) {
+                    return GL_FALSE;
+                }
+
+                end = p + strlen(p);
+
+                while (p < end) {
+                    int n = strcspn(p, " ");
+                    if ((extNameLen == n) && (strncmp(extName, p, n) == 0)) {
+                        return GL_TRUE;
+                    }
+                    p += (n + 1);
+                }
+                return GL_FALSE;
             }
 
             void Initialize(int width, int height)
@@ -64,8 +158,10 @@ namespace offscreen_render
                 this->width = width;
                 this->height = height;
 
+
                 fboID = 0;
                 glGenFramebuffers(1, &fboID);
+                checkError("glGenFramebuffers");
                 glBindFramebuffer(GL_FRAMEBUFFER, fboID);
                 checkError("glBindFramebuffer");
 
@@ -83,9 +179,19 @@ namespace offscreen_render
                 checkError("glTexImage");
 
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                checkError("glTexParameteri");
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
+                checkError("glTexParameteri");
                 depthID = 0;
+
+                // Set "renderedTexture" as our colour attachement #0
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
+                checkError("glFramebufferTexture");
+
+                printf("Bound texture\n");
+                GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER);
+                checkError("glCheckFramebufferStatus");
+                checkFramebufferError(status);
 
                 glGenRenderbuffers(1, &depthID);
                 checkError("glGenRenderbuffers");
@@ -96,9 +202,11 @@ namespace offscreen_render
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthID);
                 checkError("glFramebufferRenderbuffer");
 
-                // Set "renderedTexture" as our colour attachement #0
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
-                checkError("glFramebufferTexture");
+                printf("Bound depth buffer\n");
+
+                status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER);
+                checkError("glCheckFramebufferStatus");
+                checkFramebufferError(status);
 
                 data = AllocateData();
 
@@ -117,62 +225,27 @@ namespace offscreen_render
                 GLenum drawBuffers[1] =
                 { GL_COLOR_ATTACHMENT0 };
                 glDrawBuffers(1, drawBuffers); // "1" is the size of DrawBuffers
+                checkError("DrawBuffers");
                 // Render to our framebuffer
-                glBindFramebuffer(GL_FRAMEBUFFER, fboID);
+                glBindFramebufferEXT(GL_FRAMEBUFFER, fboID);
+                checkError("BindFrameBuffer");
+
+                /*
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
+                checkError("glFramebufferTexture2D");
+
+                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthID);
+                checkError("glFramebufferRenderbuffer");
+
                 // Always check that our framebuffer is ok
-                GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-                if (status != GL_FRAMEBUFFER_COMPLETE)
-                {
-                    switch (status)
-                    {
-                        printf("Something wrong with framebuffer!\n");
-                    case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-                        printf("An attachment could not be bound to frame buffer object!");
-                        break;
-
-                    case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-                        printf("Attachments are missing! At least one image (texture) must be bound to the frame buffer object!");
-                        break;
-
-                    case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
-                        printf("The dimensions of the buffers attached to the currently used frame buffer object do not match!");
-                        break;
-
-                    case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
-                        printf("The formats of the currently used frame buffer object are not supported or do not fit together!");
-                        break;
-
-                    case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
-                        printf("A Draw buffer is incomplete or undefinied. All draw buffers must specify attachment points that have images attached.");
-                        break;
-
-                    case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
-                        printf("A Read buffer is incomplete or undefinied. All read buffers must specify attachment points that have images attached.");
-                        break;
-
-                    case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
-                        printf("All images must have the same number of multisample samples.");
-                        break;
-
-                    case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
-                        printf(
-                                "If a layered image is attached to one attachment, then all attachments must be layered attachments. The attached layers do not have to have the same number of layers, nor do the layers have to come from the same kind of texture.");
-                        break;
-
-                    case GL_FRAMEBUFFER_UNSUPPORTED:
-                        printf("Attempt to use an unsupported format combinaton!");
-                        break;
-
-                    default:
-                        printf("Unknown error while attempting to create frame buffer object!");
-                        break;
-                    }
-                    printf("\n");
-
-                }
+                GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER);
+                checkError("glCheckFramebufferStatus");
+                checkFramebufferError(status);
+                */
                 glViewport(0, 0, width, height);
                 glClearColor(0, 0, 0, 1.0);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                checkError("glClear");
             }
 
             void End()
@@ -219,6 +292,7 @@ namespace offscreen_render
                     for (const Model& model : models)
                     {
                         shader->SetWorldMatrix(Mat4x4(model.transform));
+
                         model.buffer->Begin();
                         {
                             model.buffer->Draw();

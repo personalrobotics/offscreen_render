@@ -145,7 +145,7 @@ namespace offscreen_render
             return false;
         }
 
-        window = glfwCreateWindow(1, 1, "Offscreen Window", NULL, NULL);
+        window = glfwCreateWindow(640, 480, "Offscreen Window", NULL, NULL);
 
         if (!window)
         {
@@ -326,8 +326,8 @@ namespace offscreen_render
                 Transform mat = ORToTransform(transform);
                 renderer.viewMatrix = GetViewMatrix(mat);
                 renderer.Draw();
-                //glfwSwapBuffers(window);
-                //glfwPollEvents();
+                glfwSwapBuffers(window);
+                glfwPollEvents();
             }
             else if (isInitialized && isRunning && (geomData->width == 0 || geomData->height == 0))
             {
