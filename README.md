@@ -12,6 +12,45 @@ The project depends on the following:
 * GLEW (included in GLFW)
 * [GLFW framework 3.0](http://www.glfw.org/) or higher
 
+##Ros Camera Usage##
+After initializing openrave, you can create a simulated ROS camera using this package. Here's a simple script for doing that:
+```python
+# Load some objects and set them up in the environment
+env.Load('/home/mklingen/prdev/src/pr-ordata/data/objects/bowl.kinbody.xml')
+env.Load('/home/mklingen/prdev/src/pr-ordata/data/objects/fuze_bottle.kinbody.xml')
+bowl = env.GetKinBody('bowl')
+fuze = env.GetKinBody('fuze_bottle')
+tf = fuze.GetTransform()
+tf[0:3, 3] = numpy.array([0, 0, 1])
+fuze.SetTransform(tf)
+
+# Create the sensor
+sensor = openravepy.RaveCreateSensor(env, 'rave_to_ros_camera')
+# Set its intrinsics (fx, fy, cx, cy, near, far)
+sensor.SendCommand('setintrinsic 529 525 328 267 0.01 10')
+# And its resolution in pixels
+sensor.SendCommand('setdims 640 480')
+# Set up the ROS camera. The arguments are
+# Node name -- the name of the ROS node to use. Put "~" for a private node
+# Depth image name -- the name of the depth image to publish
+# Color image name -- the name of the color image to publish
+# Point cloud name -- the name of the point cloud to publish
+# tf frame name -- the name of the camera TF frame to publish
+# base frame name -- what frame in TF is the camera in?
+sensor.SendCommand('initialize ~ /sim/depth /sim/color /sim/points sim_camera world')
+#Initialize the sensor. Right now the size of the sensor can't be changed after you do this.
+# It will also open up an annoying opengl window just to get context.
+sensor.Configure(openravepy.Sensor.ConfigureCommand.PowerOn)
+# Add bodies to render with the given (r, g, b) colors
+sensor.SendCommand('addbody bowl 255 0 0')
+sensor.SendCommand('addbody fuze_bottle 0 255 0')
+# You can also set the sensor's extrinsic transform
+sensor.SetTransform([...])
+# This is how you make it render a frame (the argument is meaningless). Call this again and again to get more images.
+sensor.SimulationStep(0.01)
+```
+The images will be published through a ROS interface. A point cloud will also be published.
+
 ##Occlusion Renderer Usage##
 
 ```python
