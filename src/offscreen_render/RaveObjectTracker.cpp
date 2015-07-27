@@ -1,5 +1,8 @@
 #include <offscreen_render/RaveObjectTracker.h>
 #include <pcl/common/transforms.h>
+#include <boost/bind.hpp>
+#include <boost/thread.hpp>
+
 namespace offscreen_render
 {
 
@@ -190,7 +193,7 @@ namespace offscreen_render
         cancelThreads = false;
         needsUpdate = false;
         numIters = 0;
-        trackThread = std::thread(std::bind(&RaveObjectTracker::TrackThread, this));
+        trackThread = boost::thread(boost::bind(&RaveObjectTracker::TrackThread, this));
     }
 
     void RaveObjectTracker::EndTracking()
@@ -220,8 +223,9 @@ namespace offscreen_render
                 {
                    Transform cameraToSensorCloud = depthCamera->transform.inverse() * worldToSensorCloud;
                    pcl::transformPointCloud(*filteredSensorCloud, *filteredSensorCloud, cameraToSensorCloud);
-                   for (OpenRAVE::KinBodyPtr& model : bridge.bodies)
+                   for (size_t i = 0; i < bridge.bodies.size(); i++)
                    {
+                       OpenRAVE::KinBodyPtr& model = bridge.bodies.at(i);
                        Transform worldToObject = ORToTransform(model->GetTransform());
                        Transform cameraToObject = depthCamera->transform.inverse() * worldToObject;
                        pcl::transformPointCloud(*filteredSynthCloud, *filteredSynthCloud, cameraToObject.inverse());

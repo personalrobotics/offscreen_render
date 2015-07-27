@@ -79,23 +79,40 @@ namespace offscreen_render
         }
     }
 
+    class RemoveBodyPredicate
+    {
+        public:
+            bool predicate(OpenRAVE::KinBodyPtr body, const offscreen_render::RaveBridge::RaveModel& model)
+            {
+                return model.body == body;
+            }
+
+            bool operator() ( const offscreen_render::RaveBridge::RaveModel& model)
+            {
+                    return predicate(_body, model);
+            }
+            OpenRAVE::KinBodyPtr _body;
+
+    };
+
     void RaveCamera::RemoveKinBody(const std::string& name)
     {
         OpenRAVE::KinBodyPtr body = GetEnv()->GetKinBody(name);
+        RemoveBodyPredicate predicate;
+        predicate._body = body;
 
         if (body.get())
         {
-            auto bodies_end = std::remove(bridge.bodies.begin(), bridge.bodies.end(), body);
+
+            std::vector<OpenRAVE::KinBodyPtr>::iterator bodies_end = std::remove(bridge.bodies.begin(), bridge.bodies.end(), body);
             bridge.bodies.erase(bodies_end);
 
-            auto end = std::remove_if
+            std::vector<RaveBridge::RaveModel>::iterator  end = std::remove_if
             (
                     bridge.models.begin(), bridge.models.end(),
-                    [body](const offscreen_render::RaveBridge::RaveModel& model)
-                    {
-                        return model.body == body;
-                    }
+                    predicate
             );
+
             bridge.models.erase(end);
         }
         else

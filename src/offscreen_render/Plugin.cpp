@@ -54,7 +54,7 @@ class ObjectTrackerPlugin : public ModuleBase
         }
 
         ros::NodeHandle nodeHandle;
-        std::shared_ptr<RaveObjectTracker> tracker;
+        boost::shared_ptr<RaveObjectTracker> tracker;
 };
 
 

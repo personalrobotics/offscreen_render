@@ -16,7 +16,8 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/common/transforms.h>
 #include <GLFW/glfw3.h>
-#include <thread>
+#include <boost/thread.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace offscreen_render
 {
@@ -51,20 +52,20 @@ namespace offscreen_render
             OffscreenRenderer renderer;
             Shader depthShader;
             Shader colorShader;
-            std::shared_ptr<ROSCamera> depthCamera;
+            boost::shared_ptr<ROSCamera> depthCamera;
             RaveBridge bridge;
             CloudGenerator cloudGenerator;
             PointCloud::ConstPtr lastSensorCloud;
             PointCloud::Ptr filteredSensorCloud;
             PointCloud::Ptr synthCloud;
             PointCloud::Ptr filteredSynthCloud;
-            std::shared_ptr<Octree> octree;
+            boost::shared_ptr<Octree> octree;
             pcl::VoxelGrid<PointCloud::PointType> gridFilter;
             GLFWwindow* window;
             bool initialized;
             bool needsUpdate;
             bool cancelThreads;
-            std::thread trackThread;
+            boost::thread trackThread;
             float searchRadius;
     };
 

@@ -4,6 +4,7 @@
 #include "Geometry.h"
 #include <string>
 #include <GL/glew.h>
+#include <stdio.h>
 
 namespace offscreen_render
 {
