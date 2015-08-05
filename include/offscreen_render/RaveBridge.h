@@ -123,7 +123,7 @@ namespace offscreen_render
 
                 const OpenRAVE::TriMesh& mesh = geometry->GetCollisionMesh();
 
-                model.buffer->position_data.resize(mesh.vertices.size() * 3);
+                model.buffer->position_data.resize(mesh.vertices.size() * 3, 9999);
                 model.buffer->color_data.resize(mesh.vertices.size() * 3);
                 model.buffer->index_data.resize(mesh.indices.size());
 
@@ -136,14 +136,12 @@ namespace offscreen_render
                     model.buffer->color_data[i * 3 + 0] = color.x;
                     model.buffer->color_data[i * 3 + 1] = color.y;
                     model.buffer->color_data[i * 3 + 2] = color.z;
-                    i++;
                 }
 
                 for (size_t i = 0; i < mesh.indices.size(); i++)
                 {
                     int idx = mesh.indices.at(i);
                     model.buffer->index_data[i] = static_cast<unsigned short>(idx);
-                    i++;
                 }
                 model.buffer->Initialize(shader);
                 return model;

@@ -285,6 +285,7 @@ namespace offscreen_render
 
             void Draw(Shader* shader)
             {
+		
                 shader->Begin();
                 {
                     shader->SetProjectionMatrix(projectionMatrix);
@@ -302,6 +303,7 @@ namespace offscreen_render
                     }
                 }
                 shader->End();
+
             }
 
             void Initialize(int width, int height);

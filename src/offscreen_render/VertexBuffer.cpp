@@ -94,7 +94,7 @@ namespace offscreen_render
     {
         // Draw the triangles !
         glDrawElements(
-        GL_TRIANGLES,      // mode
+        	GL_TRIANGLES,      // mode
                 index_data.size(),    // count
                 GL_UNSIGNED_SHORT,   // type
                 (void*) 0           // element array buffer offset

@@ -179,11 +179,11 @@ namespace offscreen_render
             RAVELOG_ERROR("Failed to initialize GLEW.");
             return false;
         }
-        if (!GLEW_VERSION_2_1)
-        {
-            RAVELOG_ERROR("Need GLEW 2.1 or higher.");
-            return false;
-        }
+       // if (!GLEW_VERSION_2_1)
+       // {
+       //     RAVELOG_ERROR("Need GLEW 2.1 or higher.");
+       //     return false;
+       // }
 
         if (!GLEW_ARB_framebuffer_object)
         {
