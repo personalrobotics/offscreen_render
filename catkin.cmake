@@ -5,6 +5,7 @@ catkin_package(INCLUDE_DIRS include
     LIBRARIES ${PROJECT_NAME})
 
 catkin_python_setup()
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/cmake)
 find_package(OpenRAVE REQUIRED)
 find_package(GLEW REQUIRED)

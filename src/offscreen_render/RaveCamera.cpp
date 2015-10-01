@@ -162,7 +162,7 @@ namespace offscreen_render
             return false;
         }
 
-        window = glfwCreateWindow(640, 480, "Offscreen Window", NULL, NULL);
+        window = glfwCreateWindow(1, 1, "Offscreen Window", NULL, NULL);
 
         if (!window)
         {
