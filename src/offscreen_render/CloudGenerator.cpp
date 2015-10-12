@@ -1,4 +1,5 @@
 #include <offscreen_render/CloudGenerator.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 namespace offscreen_render
 {
@@ -22,7 +23,7 @@ namespace offscreen_render
     void CloudGenerator::GenerateCloud(const FrameBuffer<float, 3>& buffer, const FrameBuffer<float, 3>& colorBuffer,  PointCloud::Ptr cloud, const std::string& frame, const float& fx, const float& fy, const float& cx, const float& cy)
     {
         cloud->header.frame_id = frame;
-        cloud->header.stamp = ros::Time::now().toNSec();
+        pcl_conversions::toPCL(ros::Time::now(), cloud->header.stamp);
         cloud->is_dense = false;
         cloud->points.clear();
         size_t i = 0;

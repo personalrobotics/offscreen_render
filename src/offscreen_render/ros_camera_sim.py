@@ -13,7 +13,7 @@ def render_frame_thread(camera_sim):
     camera_sim.camera = openravepy.RaveCreateSensor(camera_sim.env, 'rave_to_ros_camera');
     camera_sim.send_command('setintrinsic ' + str(info.K[0]) + ' ' + str(info.K[4]) + ' ' + str(info.K[2]) + ' ' + str(info.K[5]) + ' ' + str(camera_sim.near) + ' ' + str(camera_sim.far));
     camera_sim.send_command('setdims ' + str(info.width) + ' ' + str(info.height));
-    camera_sim.send_command('initialize ~ ' + camera_sim.topic + '/sim_depth' + ' ' + camera_sim.topic + '/sim_color ' + camera_sim.topic + '/sim_points ' + info.header.frame_id + '_sim ' + camera_sim.fixed_frame);
+    camera_sim.send_command('initialize ~ ' + camera_sim.namespace + '/sim_depth' + ' ' + camera_sim.namespace + '/sim_color ' + camera_sim.namespace + '/sim_points ' + info.header.frame_id + '_sim ' + camera_sim.fixed_frame);
     camera_sim.camera.Configure(openravepy.Sensor.ConfigureCommand.PowerOn);
 
     while (True):
@@ -91,8 +91,9 @@ class RosCameraSim:
                     pass;
 
     def start(self, camera_info_topic):
-        self.topic = camera_info_topic;
-        self.info_subscriber = rospy.Subscriber(camera_info_topic, sensor_msgs.msg.CameraInfo, self.info_callback);
+        self.topic = camera_info_topic + '/camera_info';
+        self.namespace = camera_info_topic;
+        self.info_subscriber = rospy.Subscriber(self.topic, sensor_msgs.msg.CameraInfo, self.info_callback);
         self.listener = tf.TransformListener();
         self.lock = Lock();
         print "Waiting for callback..."
