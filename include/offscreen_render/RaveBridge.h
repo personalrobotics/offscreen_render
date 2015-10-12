@@ -50,11 +50,12 @@ namespace offscreen_render
 
             inline void GetAllModels(std::vector<Model>& flatModels)
             {
-                for (const RaveModel& raveModel : models)
+                for (size_t i = 0; i < models.size(); i++)
                 {
-                    for (const Model& model : raveModel.models)
+                    const RaveModel& raveModel = models.at(i);
+                    for (size_t j = 0; j < raveModel.models.size(); j++)
                     {
-                        flatModels.push_back(model);
+                        flatModels.push_back(raveModel.models.at(j));
                     }
                 }
             }
@@ -66,27 +67,31 @@ namespace offscreen_render
 
                 std::vector<OpenRAVE::KinBody::LinkPtr> affectedLinks;
 
-                for (const OpenRAVE::KinBody::LinkPtr& link : robot->GetLinks())
+                for (size_t i = 0; i < robot->GetLinks().size(); i++)
                 {
-                    for (int idx : indices)
+                    const OpenRAVE::KinBody::LinkPtr& link = robot->GetLinks().at(i);
+                    for (size_t j = 0; j < indices.size(); j++)
                     {
-                          if( robot->DoesAffect(robot->GetJointFromDOFIndex(idx)->GetJointIndex(), link->GetIndex()))
-                          {
-                              affectedLinks.push_back(link);
-                          }
+                        int idx = indices.at(j);
+                        if( robot->DoesAffect(robot->GetJointFromDOFIndex(idx)->GetJointIndex(), link->GetIndex()))
+                        {
+                            affectedLinks.push_back(link);
+                        }
                     }
                 }
 
-                for (OpenRAVE::KinBody::LinkPtr link : affectedLinks)
+                for (size_t i = 0; i < affectedLinks.size(); i++)
                 {
+                    OpenRAVE::KinBody::LinkPtr link = affectedLinks.at(i);
                     models.push_back(CreateModel(shader, robot, link, ColorIntToRaveColor(colorTable[link->GetIndex()])));
                 }
             }
 
             inline void CreateModels(const Shader& shader, const OpenRAVE::KinBodyPtr& body, const OpenRAVE::Vector& color)
             {
-                for(const OpenRAVE::KinBody::LinkPtr& link : body->GetLinks())
+                for (size_t i = 0; i < body->GetLinks().size(); i++)
                 {
+                    const OpenRAVE::KinBody::LinkPtr& link = body->GetLinks().at(i);
                     models.push_back(CreateModel(shader, body, link, color));
                 }
 
@@ -100,8 +105,9 @@ namespace offscreen_render
                 model.link = link;
                 model.body = body;
 
-                for (const OpenRAVE::KinBody::Link::GeometryConstPtr& geom : link->GetGeometries())
+                for (size_t i = 0; i < link->GetGeometries().size(); i++)
                 {
+                    const OpenRAVE::KinBody::Link::GeometryConstPtr& geom = link->GetGeometries().at(i);
                     model.models.push_back(CreateModel(shader, geom,  link->GetTransform() * geom->GetTransform(), color));
                 }
                 return model;
@@ -121,9 +127,9 @@ namespace offscreen_render
                 model.buffer->color_data.resize(mesh.vertices.size() * 3);
                 model.buffer->index_data.resize(mesh.indices.size());
 
-                size_t i = 0;
-                for (const OpenRAVE::Vector& vertex : mesh.vertices)
+                for (size_t i = 0; i < mesh.vertices.size(); i++)
                 {
+                    const OpenRAVE::Vector& vertex = mesh.vertices.at(i);
                     model.buffer->position_data[i * 3 + 0] = vertex.x;
                     model.buffer->position_data[i * 3 + 1] = vertex.y;
                     model.buffer->position_data[i * 3 + 2] = vertex.z;
@@ -133,9 +139,9 @@ namespace offscreen_render
                     i++;
                 }
 
-                i = 0;
-                for (int idx : mesh.indices)
+                for (size_t i = 0; i < mesh.indices.size(); i++)
                 {
+                    int idx = mesh.indices.at(i);
                     model.buffer->index_data[i] = static_cast<unsigned short>(idx);
                     i++;
                 }
@@ -145,8 +151,9 @@ namespace offscreen_render
 
             void UpdateModels()
             {
-                for (RaveModel& model : models)
+                for (size_t m = 0; m < models.size(); m++)
                 {
+                    RaveModel& model = models.at(m);
                     for (size_t i = 0; i < model.models.size(); i++)
                     {
                         const OpenRAVE::KinBody::Link::GeometryConstPtr& geom = model.link->GetGeometry((int)i);

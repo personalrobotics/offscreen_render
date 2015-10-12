@@ -37,7 +37,7 @@ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/shaders/
 FILES_MATCHING PATTERN "*.glsl"
 )
 
-set( CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
+#set( CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
 set(SOURCES
     src/offscreen_render/ROSCamera.cpp

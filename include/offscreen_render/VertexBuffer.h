@@ -4,6 +4,7 @@
 #include "Shader.h"
 #include <vector>
 #include <GL/glew.h>
+#include <stdio.h>
 
 namespace offscreen_render
 {

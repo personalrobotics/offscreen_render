@@ -55,9 +55,9 @@ namespace offscreen_render
 
                octree->setInputCloud(filteredSensorCloud);
 
-
-               for (const PointCloud::PointType& point : filteredSynthCloud->points)
+               for (size_t p = 0; p < filteredSynthCloud->points.size(); p++)
                {
+                   const PointCloud::PointType& point = filteredSynthCloud->points.at(p);
                    std::vector<int> result;
                    std::vector<float> squaredDists;
                    int numFound = octree->radiusSearch(point, searchRadius, result, squaredDists);
@@ -195,6 +195,6 @@ namespace offscreen_render
         filteredSynthCloud.reset(new PointCloud());
         cancelThreads = false;
         needsUpdate = false;
-        trackThread = std::thread(std::bind(&RaveArmTracker::TrackThread, this));
+        trackThread = boost::thread(boost::bind(&RaveArmTracker::TrackThread, this));
     }
 }

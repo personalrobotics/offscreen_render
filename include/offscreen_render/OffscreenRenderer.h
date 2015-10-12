@@ -289,8 +289,9 @@ namespace offscreen_render
                 {
                     shader->SetProjectionMatrix(projectionMatrix);
                     shader->SetViewMatrix(viewMatrix);
-                    for (const Model& model : models)
+                    for (size_t i = 0; i < models.size(); i++)
                     {
+                        const Model& model = models.at(i);
                         shader->SetWorldMatrix(Mat4x4(model.transform));
 
                         model.buffer->Begin();
