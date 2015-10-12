@@ -1,5 +1,5 @@
 # offscreen_render
-A utility for rendering OpenRAVE kinbodies offscreen to get properties like depth, occlusion, color, etc.
+A utility for rendering OpenRAVE kinbodies offscreen to get properties like depth, occlusion, color, etc. Also simulates ROS cameras and tracks OpenRAVE objects.
 
 ##Installation Requirements##
 
@@ -11,6 +11,21 @@ The project depends on the following:
 * OpenGL 2.1 or higher (included in most linux distros)
 * GLEW (included in GLFW)
 * [GLFW framework 3.0](http://www.glfw.org/) or higher
+
+##Python Wrapper##
+Probably the easiest way to use this package is with the python wrapper. (`ros_camera_sim.py`). This wraps the OpenRAVE plugin and handles the update thread, etc. Here's how to use it:
+
+```
+# Create a simulated camera in the given environment
+camera = RosCameraSim(env)
+# Start looping by simulating a ROS camera with the given topic.
+camera.start('/head/kinect2/qhd')
+# Add or remove bodies from the environment
+camera.add_body(my_body);
+```
+
+The images/pointclouds get published to ROS.
+
 
 ##Ros Camera Usage##
 After initializing openrave, you can create a simulated ROS camera using this package. Here's a simple script for doing that:
