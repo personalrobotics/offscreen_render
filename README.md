@@ -15,7 +15,7 @@ The project depends on the following:
 ##Python Wrapper##
 Probably the easiest way to use this package is with the python wrapper. (`ros_camera_sim.py`). This wraps the OpenRAVE plugin and handles the update thread, etc. Here's how to use it:
 
-```
+```python
 # Create a simulated camera in the given environment
 camera = RosCameraSim(env)
 # Start looping by simulating a ROS camera with the given topic.
