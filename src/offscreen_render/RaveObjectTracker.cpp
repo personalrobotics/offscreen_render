@@ -252,7 +252,8 @@ namespace offscreen_render
     void RaveObjectTracker::Track()
     {
         if(needsUpdate) return;
-
+	
+	
         ros::spinOnce();
         glfwMakeContextCurrent(window);
         glfwPollEvents();

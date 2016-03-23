@@ -33,13 +33,13 @@ namespace offscreen_render
                             const std::string& fixedFrame = "/map",
                             const float near = 0.01,
                             const float far = 100.0f,
-                            const int& numParticles = 500,
+                            const int& numParticles = 400,
                             const float& downsampleSize = 0.005f,
                             const float& maxDistance = 0.01f,
                             const float& octreeLeaf = 0.005f,
                             const float& delta = 0.99f,
                             const float& epsilon = 0.2f,
-                            const float& binSize = 0.1f,
+                            const float& binSize = 0.2f,
                             const float& covariance = 0.000225f,
                             const float& resampleLikelihood = 0.00f
                             );

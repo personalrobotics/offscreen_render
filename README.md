@@ -129,3 +129,10 @@ The object needs to be localized fairly well (within 10 cm) before tracking; but
 ![Image](http://i.imgur.com/hhyGqER.png)
 
 The tracker creates an offscreen window to get an OpenGL context. Do not close it. It also publishes a synthetic point cloud to `offscreen_render/synth_point_cloud` for debugging purposes.
+
+Usage Note: 
+
+* Works without simulation. 
+* GL rendering is currently broken. The tracker produces an empty gl context with no contents. 
+* Before using the tracker, the Apriltags module can be used to estimate the initial position (**The initial orientation of the object must be reasonably close**). 
+* The tracker works reasonably well with solid objects moving at a slow speed. 
