@@ -27,7 +27,7 @@ def render_frame_thread(camera_sim):
             camera_sim.additions = [];
 
             for rem in camera_sim.removals:
-                camera_sim.send_command('removebody ' + rem[0]);
+                camera_sim.send_command('removebody ' + rem);
 
             camera_sim.removals = [];
 
