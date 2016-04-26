@@ -11,6 +11,11 @@ The project depends on the following:
 * OpenGL 2.1 or higher (included in most linux distros)
 * GLEW (included in GLFW)
 * [GLFW framework 3.0](http://www.glfw.org/) or higher
+```python
+sudo add-apt-repository ppa:keithw/glfw3
+sudo apt-get update
+sudo apt-get install libglfw3-dev
+```
 
 ##Python Wrapper##
 Probably the easiest way to use this package is with the python wrapper. (`ros_camera_sim.py`). This wraps the OpenRAVE plugin and handles the update thread, etc. Here's how to use it:
