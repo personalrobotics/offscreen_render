@@ -69,6 +69,13 @@ class RosCameraSim:
                 return;
             self.removals += [body.GetName()];
 
+    def remove_body_now(self, body):
+        with self.lock:
+            if self.camera is None:
+                print "Error:no camera created yet. Can't remove body";
+                return;
+            self.camera.SendCommand('removebody ' + body.GetName());
+
     def send_command(self, command):
         print command;
         self.camera.SendCommand(command);
