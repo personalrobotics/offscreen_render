@@ -1,5 +1,5 @@
 # offscreen_render
-A utility for rendering OpenRAVE kinbodies offscreen to get properties like depth, occlusion, color, etc. Also simulates ROS cameras and tracks OpenRAVE objects.
+A utility for rendering OpenRAVE kinbodies offscreen to get properties like depth, occlusion, color, etc. Also simulates ROS cameras and tracks OpenRAVE objects. This library was developed by [Matthew Klingensmith](https://github.com/mklingen) and contributed to by [Shushman Choudhury](https://github.com/Shushman)
 
 ##Installation Requirements##
 
