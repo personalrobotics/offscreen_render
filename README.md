@@ -180,6 +180,7 @@ matplotlib.pyplot.imshow(img)
 
 pyplot.show();
 ```
+![img](http://i.imgur.com/nCNkQWZ.png)
 
 ##Object Tracker Usage##
 
