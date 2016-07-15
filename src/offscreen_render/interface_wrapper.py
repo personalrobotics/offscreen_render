@@ -92,8 +92,8 @@ class SimCamera:
     
     def set_link_mesh_positions(self, body, colors, link_idx=0, geometry_idx=0):
         with self.lock:
-             """Given a kinbody, its link index, and geometry index, sets the positions
-                of its vertices (a flat array of (x, y, z) values)"""
+            """Given a kinbody, its link index, and geometry index, sets the positions
+               of its vertices (a flat array of (x, y, z) values)"""
             pos_string = ' '.join(['%.5f' % num for num in colors])
             return self.send_command('set_link_mesh_positions '+ body.GetName() + ' ' + str(link_idx) + ' ' + str(geometry_idx) + ' ' + pos_string);
     

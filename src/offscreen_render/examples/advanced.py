@@ -8,12 +8,25 @@ from matplotlib import pyplot
 from openravepy import *
 from offscreen_render import interface_wrapper
 from mpl_toolkits.mplot3d import Axes3D
+from catkin.find_in_workspaces import find_in_workspaces
 
 env = Environment() # create openrave environment
 
 # Load some objects and set them up in the environment
-env.Load('/home/mklingen/prdev/src/pr-ordata/data/objects/bowl.kinbody.xml')
-env.Load('/home/mklingen/prdev/src/pr-ordata/data/objects/fuze_bottle.kinbody.xml')
+bowl_path = find_in_workspaces(search_dirs=['share'],
+                      project="pr_ordata",
+                      path="data/objects/bowl.kinbody.xml",
+                      first_match_only=True)[0]
+
+fuze_bottle_path = find_in_workspaces(search_dirs=['share'],
+                      project="pr_ordata",
+                      path="data/objects/fuze_bottle.kinbody.xml",
+                      first_match_only=True)[0]
+
+env.Load(bowl_path)
+env.Load(fuze_bottle_path)
+
+
 bowl = env.GetKinBody('bowl')
 fuze = env.GetKinBody('fuze_bottle')
 
