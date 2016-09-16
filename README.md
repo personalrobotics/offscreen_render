@@ -47,7 +47,14 @@ fuze.SetTransform(tf)
 # Create the sensor
 sensor = openravepy.RaveCreateSensor(env, 'rave_to_ros_camera')
 # Set its intrinsics (fx, fy, cx, cy, near, far)
-sensor.SendCommand('setintrinsic 529 525 328 267 0.01 10')
+# Define the file path to the intrinsics value of the kinect. It is stored in 
+# herb_launch/calibration/kinect2/502845441942
+filepath = '$Filepath to intrinsics'
+# To read the intrinsics values for the kinect camera:
+from offscreen_render import parse_intrinsics
+fx, fy, cx, cy = parse_instrinsics.getIntrinsics(filepath)
+set_intrinsics = 'setintrinsic {0} {1} {2} {3} 0.1 10'.format(fx, fy, cx, cy)
+sensor.SendCommand(set_intrinsics)
 # And its resolution in pixels
 sensor.SendCommand('setdims 640 480')
 # Set up the ROS camera. The arguments are
@@ -86,7 +93,14 @@ fuze.SetTransform(tf)
 # Create the sensor
 sensor = openravepy.RaveCreateSensor(env, 'offscreen_render_camera')
 # Set its intrinsics (fx, fy, cx, cy, near, far)
-sensor.SendCommand('setintrinsic 529 525 328 267 0.01 10')
+# Define the file path to the intrinsics value of the kinect. It is stored in 
+# herb_launch/calibration/kinect2/502845441942
+filepath = '$Filepath to intrinsics'
+# To read the intrinsics values for the kinect camera:
+from offscreen_render import parse_intrinsics
+fx, fy, cx, cy = parse_instrinsics.getIntrinsics(filepath)
+set_intrinsics = 'setintrinsic {0} {1} {2} {3} 0.1 10'.format(fx, fy, cx, cy)
+sensor.SendCommand(set_intrinsics)
 # And its resolution in pixels
 sensor.SendCommand('setdims 640 480')
 #Initialize the sensor. Right now the size of the sensor can't be changed after you do this.
