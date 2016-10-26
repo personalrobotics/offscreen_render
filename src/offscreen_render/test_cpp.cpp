@@ -88,8 +88,9 @@ void DrawSceneFixed(float aspect)
 }
 
 using namespace offscreen_render;
-int main(void)
+int main(int argc, char** argv)
 {
+    ros::init(argc, argv, "test_offscreen_render");
     OpenRAVE::RaveInitialize(true);
     OpenRAVE::EnvironmentBasePtr environment = OpenRAVE::RaveCreateEnvironment();
     RaveCamera2ROS cam(environment);
