@@ -9,6 +9,7 @@ from openravepy import *
 from offscreen_render import interface_wrapper
 from mpl_toolkits.mplot3d import Axes3D
 from catkin.find_in_workspaces import find_in_workspaces
+from .. import parse_intrinsics
 
 env = Environment() # create openrave environment
 
@@ -37,6 +38,13 @@ bowl.SetTransform(tf)
 
 # Position the camera
 tf[0:3, 3] = numpy.array([0.1, 0, -0.2])
+
+# Read intrinsics
+intrinsics_path = find_in_workspaces(search_dirs=['share'],
+                      project="herb_description",
+                      path="camera/kinect2/502845441942/calib_color.yaml",
+                      first_match_only=True)[0]
+fx, fy, cx, cy = parse_intrinsics.getIntrinsics(intrinsics_path)
 
 # Initialize the camera
 camera = interface_wrapper.SimCamera(env, transform=tf,
