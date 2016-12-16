@@ -98,6 +98,19 @@ namespace offscreen_render
                 bodies.push_back(body);
             }
 
+            inline RaveModel* GetModel(const OpenRAVE::KinBody::LinkPtr& link)
+            {
+                for (size_t i = 0; i < models.size(); i++)
+                {
+                    if (models.at(i).link.get() == link.get())
+                    {
+                        return &models.at(i);
+                    }
+                }
+                RAVELOG_ERROR("Link %s has no model. Has it been added to the renderer?\n", link->GetName().c_str());
+                return 0x0;
+            }
+
             inline RaveModel CreateModel(const Shader& shader, const OpenRAVE::KinBodyPtr& body,
                     const OpenRAVE::KinBody::LinkPtr& link, const OpenRAVE::Vector& color)
             {
@@ -117,34 +130,106 @@ namespace offscreen_render
                     const OpenRAVE::Transform& globalTransform,
                     const OpenRAVE::Vector& color)
             {
+                const OpenRAVE::TriMesh& mesh = geometry->GetCollisionMesh();
+                std::vector<OpenRAVE::Vector> colors(mesh.vertices.size(), color);
+                return CreateModel(shader, mesh, globalTransform, colors);
+            }
+
+            inline Model CreateModel(const Shader& shader, const OpenRAVE::TriMesh& mesh,
+                    const OpenRAVE::Transform& globalTransform,
+                    const std::vector<OpenRAVE::Vector>& colors)
+            {
                 Model model;
                 model.transform = ORToTransform(globalTransform).matrix();
                 model.buffer = new VertexBuffer();
-
-                const OpenRAVE::TriMesh& mesh = geometry->GetCollisionMesh();
-
                 model.buffer->position_data.resize(mesh.vertices.size() * 3);
                 model.buffer->color_data.resize(mesh.vertices.size() * 3);
                 model.buffer->index_data.resize(mesh.indices.size());
 
+                if (colors.size() != mesh.vertices.size())
+                {
+                    RAVELOG_ERROR("Mesh has %lu vertices, but %lu colors were given.\n", mesh.vertices.size(), colors.size());
+                    throw std::invalid_argument("Mesh had incorrect number of colors.");
+                }
+
                 for (size_t i = 0; i < mesh.vertices.size(); i++)
                 {
-                    const OpenRAVE::Vector& vertex = mesh.vertices.at(i);
-                    model.buffer->position_data[i * 3 + 0] = vertex.x;
-                    model.buffer->position_data[i * 3 + 1] = vertex.y;
-                    model.buffer->position_data[i * 3 + 2] = vertex.z;
-                    model.buffer->color_data[i * 3 + 0] = color.x;
-                    model.buffer->color_data[i * 3 + 1] = color.y;
-                    model.buffer->color_data[i * 3 + 2] = color.z;
+                   const OpenRAVE::Vector& vertex = mesh.vertices.at(i);
+                   model.buffer->position_data[i * 3 + 0] = vertex.x;
+                   model.buffer->position_data[i * 3 + 1] = vertex.y;
+                   model.buffer->position_data[i * 3 + 2] = vertex.z;
+                   model.buffer->color_data[i * 3 + 0] = colors[i].x;
+                   model.buffer->color_data[i * 3 + 1] = colors[i].y;
+                   model.buffer->color_data[i * 3 + 2] = colors[i].z;
                 }
 
                 for (size_t i = 0; i < mesh.indices.size(); i++)
                 {
-                    int idx = mesh.indices.at(i);
-                    model.buffer->index_data[i] = static_cast<unsigned short>(idx);
+                   int idx = mesh.indices.at(i);
+                   model.buffer->index_data[i] = static_cast<unsigned short>(idx);
                 }
                 model.buffer->Initialize(shader);
                 return model;
+            }
+
+            inline void SetVertexColors(RaveModel* model, size_t modelIndex, const std::vector<OpenRAVE::Vector>& colors)
+            {
+                if (!model)
+                {
+                    RAVELOG_ERROR("Cannot set model vertex colors. Model is null pointer.\n");
+                    return;
+                }
+
+                if (modelIndex >= model->models.size())
+                {
+                    RAVELOG_ERROR("Cannot set model %lu, link only has %lu models.\n", modelIndex, model->models.size());
+                    return;
+                }
+
+                std::vector<GLfloat>& color_data = model->models[modelIndex].buffer->color_data;
+
+                if (color_data.size() != colors.size() * 3)
+                {
+                    RAVELOG_ERROR("Incorrect number of vertex colors. Expected %lu, but got %lu\n", color_data.size() / 3, colors.size());
+                    return;
+                }
+
+                for (size_t i = 0; i < colors.size(); i++)
+                {
+                    color_data[i * 3 + 0] = colors[i].x;
+                    color_data[i * 3 + 1] = colors[i].y;
+                    color_data[i * 3 + 2] = colors[i].z;
+                }
+            }
+
+            inline void SetVertexPositions(RaveModel* model, size_t modelIndex, const std::vector<OpenRAVE::Vector>& positions)
+            {
+                if (!model)
+                {
+                    RAVELOG_ERROR("Cannot set model vertex positions. Model is null pointer.\n");
+                    return;
+                }
+
+                if (modelIndex >= model->models.size())
+                {
+                    RAVELOG_ERROR("Cannot set model %lu, link only has %lu models.\n", modelIndex, model->models.size());
+                    return;
+                }
+
+                std::vector<GLfloat>& vertex_data = model->models[modelIndex].buffer->position_data;
+
+                if (vertex_data.size() != positions.size() * 3)
+                {
+                    RAVELOG_ERROR("Incorrect number of vertex positions. Expected %lu, but got %lu\n", vertex_data.size() / 3, positions.size());
+                    return;
+                }
+
+                for (size_t i = 0; i < positions.size(); i++)
+                {
+                    vertex_data[i * 3 + 0] = positions[i].x;
+                    vertex_data[i * 3 + 1] = positions[i].y;
+                    vertex_data[i * 3 + 2] = positions[i].z;
+                }
             }
 
             void UpdateModels()
@@ -163,8 +248,6 @@ namespace offscreen_render
 
             std::vector<RaveModel> models;
             std::vector<OpenRAVE::KinBodyPtr> bodies;
-
-
 
     };
 }

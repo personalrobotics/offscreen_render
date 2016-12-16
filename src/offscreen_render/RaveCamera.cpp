@@ -11,6 +11,8 @@
 #include <offscreen_render/Conversions.h>
 #include <ros/package.h>
 
+#define CMD(name, fn, comment) RegisterCommand(name, boost::bind(&RaveCamera::fn, this, _1, _2), comment)
+
 namespace offscreen_render
 {
     RaveCamera::RaveCamera(OpenRAVE::EnvironmentBasePtr env) :
@@ -21,11 +23,32 @@ namespace offscreen_render
         near = 0.01f;
         far = 10.0f;
 
-        RegisterCommand("setintrinsic", boost::bind(&RaveCamera::_SetIntrinsics, this, _1, _2), "Set the intrinsic parameters of the camera (fx,fy,cx,cy,near,far).");
-        RegisterCommand("setdims", boost::bind(&RaveCamera::_SetSize, this, _1, _2), "Set the dimensions of the image (width,height)");
-        RegisterCommand("addbody", boost::bind(&RaveCamera::_AddKinBody, this, _1, _2), "Add a kinbody to the render scene with the given 24 bit color (name, r, g, b)");
-        RegisterCommand("removebody", boost::bind(&RaveCamera::_RemoveKinBody, this, _1, _2), "remove a kinbody with (name)");
-        RegisterCommand("clearbodies", boost::bind(&RaveCamera::_ClearBodies, this, _1, _2), "clear all kinbodies");
+        CMD("setintrinsic", _SetIntrinsics,
+                "<fx,fy,cx,cy,near,far>. Set the intrinsic parameters of the camera.");
+        CMD("setdims", _SetSize,
+                "<width,height>. Set the dimensions of the image.");
+        CMD("addbody", _AddKinBody,
+                "<name, r, g, b>. Add a kinbody to the render scene with the given 24 bit color.");
+        CMD("removebody", _RemoveKinBody,
+                "<name>. Remove a kinbody.");
+        CMD("clearbodies", _ClearBodies,
+                "Clear all kinbodies.");
+        CMD("get_kinbody_link_mesh_ids", _GetKinbodyLinkMeshIDs,
+                "<name> -> (ids) Gets all of the link IDs of kinbody.");
+        CMD("get_num_link_geometries", _GetNumLinkGeometries,
+                "<name, link id> -> (num geometries) Gets the number of geometries of a kinbody link.");
+        CMD("get_link_mesh_positions", _GetLinkMeshPositions,
+                "<name, link id, geometry num> -> (x, y, z positions...) Gets the vertex positions associated with a link geometry.");
+        CMD("get_link_mesh_colors", _GetLinkMeshColors,
+                "<name, link id, geometry num> -> (r, g, b colors...) Gets the vertex colors associated with a link geometry.");
+        CMD("get_link_mesh_indices", _GetLinkMeshIndices,
+                "<name, link id, geometry num> -> (indicies...) Gets the triangle indices associated with a link geometry.");
+        CMD("set_link_mesh_positions", _SetLinkMeshPositions,
+                "<name, link id, geometry num, x, y, z positions...> Sets the vertex positions associated with a link geometry.");
+        CMD("set_link_mesh_colors", _SetLinkMeshColors,
+                "<name, link id, geometry num, r, g, b colors...> Sets the vertex colors associated with a link geometry.");
+        CMD("set_link_mesh_indices", _SetLinkMeshIndices, ""
+                "<name, link id, geometry num, indicies...> Sets the triangle indices associated with a link geometry.");
     }
 
     RaveCamera::~RaveCamera()
@@ -125,6 +148,289 @@ namespace offscreen_render
     {
         bridge.models.clear();
         bridge.bodies.clear();
+    }
+
+    // Gets the models associated with the given kinbody. Returns false if kinbody doesn't exist.
+    bool RaveCamera::GetModels(const std::string& name, std::vector<size_t>& models)
+    {
+        models.clear();
+
+        for (size_t i = 0; i < bridge.models.size(); i++)
+        {
+            RaveBridge::RaveModel& model = bridge.models.at(i);
+
+            if (model.body->GetName() == name)
+            {
+                models.push_back(i);
+            }
+        }
+        return !models.empty();
+    }
+
+    // Gets the mesh model associated with the given kinbody and link. Returns false if no such model exists.
+    bool RaveCamera::GetModel(const std::string& name, int link, size_t* model)
+    {
+        if (!model)
+        {
+            RAVELOG_ERROR("Nulll pointer passed to RaveCamera::GetModel\n");
+            return false;
+        }
+
+        for (size_t i = 0; i < bridge.models.size(); i++)
+        {
+            if (bridge.models.at(i).body->GetName() == name &&
+                bridge.models.at(i).link->GetIndex() == link)
+            {
+                *model = i;
+                return true;
+            }
+        }
+        RAVELOG_ERROR("No mesh exists for kinbody %s, link %d", name.c_str(), link);
+        return false;
+    }
+
+    bool RaveCamera::_GetKinbodyLinkMeshIDs(std::ostream& out, std::istream& in)
+    {
+        std::string name;
+        in >> name;
+
+        std::vector<size_t> models;
+        if (!GetModels(name, models))
+        {
+            return false;
+        }
+
+        for (size_t i = 0; i < models.size(); i++)
+        {
+            out << bridge.models.at(models[i]).link->GetIndex() << " ";
+        }
+        return true;
+    }
+
+    bool RaveCamera::_GetNumLinkGeometries(std::ostream& out, std::istream& in)
+    {
+        std::string name;
+        int link;
+        in >> name;
+        in >> link;
+
+        size_t idx = 0;
+        if (!GetModel(name, link, &idx))
+        {
+            return false;
+        }
+        out << bridge.models.at(idx).models.size();
+        return true;
+    }
+
+    bool RaveCamera::_GetLinkMeshPositions(std::ostream& out, std::istream& in)
+    {
+        std::string name = "";
+        int link = 0;
+        int geomIdx = 0;
+        in >> name;
+        in >> link;
+        in >> geomIdx;
+
+        size_t idx = 0;
+        if (!GetModel(name, link, &idx))
+        {
+            RAVELOG_ERROR("Coldn't find kinbody %s, link %d", name.c_str(), link);
+            return false;
+        }
+
+        if (geomIdx < bridge.models.at(idx).models.size() && geomIdx >= 0)
+        {
+            OutputBuffer(out, bridge.models.at(idx).models.at(geomIdx).buffer->position_data);
+        }
+        else
+        {
+            RAVELOG_ERROR("Couldn't find geometry %d. Kinbody %s, link %d has %lu geometries\n",
+                    geomIdx, name.c_str(), link, bridge.models.at(idx).models.size());
+            return false;
+        }
+        return true;
+    }
+
+    bool RaveCamera::_GetLinkMeshColors(std::ostream& out, std::istream& in)
+    {
+        std::string name;
+        int link;
+        int geomIdx;
+        in >> name;
+        in >> link;
+        in >> geomIdx;
+
+        size_t idx = 0;
+        if (!GetModel(name, link, &idx))
+        {
+            RAVELOG_ERROR("Coldn't find kinbody %s, link %d", name.c_str(), link);
+            return false;
+        }
+
+        if (geomIdx < bridge.models.at(idx).models.size() && geomIdx >= 0)
+        {
+            OutputBuffer(out,  bridge.models.at(idx).models.at(geomIdx).buffer->color_data);
+        }
+        else
+        {
+            RAVELOG_ERROR("Couldn't find geometry %d. Kinbody %s, link %d has %lu geometries", name.c_str(), link, bridge.models.at(idx).models.size());
+            return false;
+        }
+        return true;
+    }
+
+    bool RaveCamera::_GetLinkMeshIndices(std::ostream& out, std::istream& in)
+    {
+        std::string name;
+        int link;
+        int geomIdx;
+        in >> name;
+        in >> link;
+        in >> geomIdx;
+
+        size_t idx = 0;
+        if (!GetModel(name, link, &idx))
+        {
+            RAVELOG_ERROR("Coldn't find kinbody %s, link %d", name.c_str(), link);
+            return false;
+        }
+
+        if (geomIdx < bridge.models.at(idx).models.size() && geomIdx >= 0)
+        {
+            OutputBuffer(out, bridge.models.at(idx).models.at(geomIdx).buffer->index_data);
+        }
+        else
+        {
+            RAVELOG_ERROR("Couldn't find geometry %d. Kinbody %s, link %d has %lu geometries", name.c_str(), link, bridge.models.at(idx).models.size());
+            return false;
+        }
+        return true;
+    }
+
+
+    bool RaveCamera::_SetLinkMeshPositions(std::ostream& out, std::istream& in)
+    {
+        std::string name;
+        int link;
+        int geomIdx;
+        in >> name;
+        in >> link;
+        in >> geomIdx;
+
+        size_t idx = 0;
+        if (!GetModel(name, link, &idx))
+        {
+            RAVELOG_ERROR("Coldn't find kinbody %s, link %d", name.c_str(), link);
+            return false;
+        }
+
+        if (geomIdx < bridge.models.at(idx).models.size() && geomIdx >= 0)
+        {
+            const Model& model = bridge.models.at(idx).models.at(geomIdx);
+
+            std::vector<GLfloat> newPositions;
+            InputBuffer(in, newPositions);
+
+            if (newPositions.size() != model.buffer->position_data.size())
+            {
+                RAVELOG_WARN("Old model (kinbody %s, link %d, geometry %d) has %lu positions. "
+                             "Overwriting with %lu new positions.", name.c_str(), link, geomIdx,
+                             model.buffer->position_data.size(),
+                             newPositions.size());
+            }
+
+            model.buffer->position_data = newPositions;
+        }
+        else
+        {
+            RAVELOG_ERROR("Couldn't find geometry %d. Kinbody %s, link %d has %lu geometries", name.c_str(), link, bridge.models.at(idx).models.size());
+            return false;
+        }
+        return true;
+    }
+
+    bool RaveCamera::_SetLinkMeshColors(std::ostream& out, std::istream& in)
+    {
+        std::string name;
+        int link;
+        int geomIdx;
+        in >> name;
+        in >> link;
+        in >> geomIdx;
+
+        size_t idx = 0;
+        if (!GetModel(name, link, &idx))
+        {
+            RAVELOG_ERROR("Coldn't find kinbody %s, link %d", name.c_str(), link);
+            return false;
+        }
+
+        if (geomIdx < bridge.models.at(idx).models.size() && geomIdx >= 0)
+        {
+            const Model& model = bridge.models.at(idx).models.at(geomIdx);
+
+            std::vector<GLfloat> newColors;
+            InputBuffer(in, newColors);
+
+            if (newColors.size() != model.buffer->color_data.size())
+            {
+                RAVELOG_WARN("Old model (kinbody %s, link %d, geometry %d) has %lu colors. "
+                             "Overwriting with %lu new colors.", name.c_str(), link, geomIdx,
+                             model.buffer->color_data.size(),
+                             newColors.size());
+            }
+
+            model.buffer->color_data = newColors;
+            model.buffer->Initialize(*renderer.colorShader);
+        }
+        else
+        {
+            RAVELOG_ERROR("Couldn't find geometry %d. Kinbody %s, link %d has %lu geometries", name.c_str(), link, bridge.models.at(idx).models.size());
+            return false;
+        }
+        return true;
+    }
+
+    bool RaveCamera::_SetLinkMeshIndices(std::ostream& out, std::istream& in)
+    {
+        std::string name;
+        int link;
+        int geomIdx;
+        in >> name;
+        in >> link;
+        in >> geomIdx;
+
+        size_t idx = 0;
+        if (!GetModel(name, link, &idx))
+        {
+            RAVELOG_ERROR("Coldn't find kinbody %s, link %d", name.c_str(), link);
+            return false;
+        }
+
+        if (geomIdx < bridge.models.at(idx).models.size() && geomIdx >= 0)
+        {
+            const Model& model = bridge.models.at(idx).models.at(geomIdx);
+
+            std::vector<GLushort> newIndicies;
+            InputBuffer(in, newIndicies);
+
+            if (newIndicies.size() != model.buffer->index_data.size())
+            {
+                RAVELOG_WARN("Old model (kinbody %s, link %d, geometry %d) has %lu indices. "
+                             "Overwriting with %lu new colors.", name.c_str(), link, geomIdx,
+                             model.buffer->index_data.size(),
+                             newIndicies.size());
+            }
+
+            model.buffer->index_data = newIndicies;
+        }
+        else
+        {
+            RAVELOG_ERROR("Couldn't find geometry %d. Kinbody %s, link %d has %lu geometries", name.c_str(), link, bridge.models.at(idx).models.size());
+            return false;
+        }
+        return true;
     }
 
     bool RaveCamera::_RemoveKinBody(std::ostream& out, std::istream& in)
