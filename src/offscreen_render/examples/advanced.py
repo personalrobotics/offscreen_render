@@ -9,7 +9,7 @@ from openravepy import *
 from offscreen_render import interface_wrapper
 from mpl_toolkits.mplot3d import Axes3D
 from catkin.find_in_workspaces import find_in_workspaces
-from .. import parse_intrinsics
+import parse_intrinsics
 
 env = Environment() # create openrave environment
 
@@ -48,7 +48,8 @@ fx, fy, cx, cy = parse_intrinsics.getIntrinsics(intrinsics_path)
 
 # Initialize the camera
 camera = interface_wrapper.SimCamera(env, transform=tf,
-                 fx=529, fy=525, cx=328, cy=267, near=0.01, far=10.0, 
+                 #fx=529, fy=525, cx=328, cy=267, near=0.01, far=10.0, 
+                 fx = fx, fy = fy, cx = cx, cy = cy, near = 0.01, far = 10.0,
                  width=640, height=480)
                  
 # Add the bodies to the camera renderer
