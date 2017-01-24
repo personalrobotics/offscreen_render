@@ -560,7 +560,7 @@ namespace offscreen_render
 
     OpenRAVE::SensorBase::SensorGeometryPtr RaveCamera::GetSensorGeometry(SensorType type)
     {
-        if (type != OpenRAVE::SensorBase::ST_Camera && type != OpenRAVE::SensorBase::ST_Invalid)
+        if (type != OpenRAVE::SensorBase::ST_Camera && type != OpenRAVE::SensorBase::ST_Camera && type != OpenRAVE::SensorBase::ST_Invalid)
         {
             RAVELOG_ERROR("Only camera sensor geometry is valid.\n");
             return OpenRAVE::SensorBase::SensorGeometryPtr();
@@ -570,25 +570,30 @@ namespace offscreen_render
 
     OpenRAVE::SensorBase::SensorDataPtr RaveCamera::CreateSensorData(OpenRAVE::SensorBase::SensorType type)
     {
-        if (type != OpenRAVE::SensorBase::ST_Camera && type != OpenRAVE::SensorBase::ST_Invalid)
+        if (type == OpenRAVE::SensorBase::ST_Camera || type == OpenRAVE::SensorBase::ST_Invalid)
+        {
+            OpenRAVE::SensorBase::CameraSensorData* data = new OpenRAVE::SensorBase::CameraSensorData();
+            data->vimagedata.resize(geomData->width * geomData->height * 3);
+            data->__trans = transform;
+            return OpenRAVE::SensorBase::SensorDataPtr(data);
+        }
+        else if(type == OpenRAVE::SensorBase::ST_Laser)
+        {
+            OpenRAVE::SensorBase::LaserSensorData* data = new OpenRAVE::SensorBase::LaserSensorData();
+            data->intensity.resize(geomData->width * geomData->height * 3);
+            data->__trans = transform;
+            return OpenRAVE::SensorBase::SensorDataPtr(data);
+        }
+        else
         {
             RAVELOG_ERROR("Only camera sensor geometry is valid.\n");
             return OpenRAVE::SensorBase::SensorDataPtr();
         }
-        OpenRAVE::SensorBase::CameraSensorData* data = new OpenRAVE::SensorBase::CameraSensorData();
-        data->vimagedata.resize(geomData->width * geomData->height * 3);
-        data->__trans = transform;
-        return OpenRAVE::SensorBase::SensorDataPtr(data);
     }
 
     bool RaveCamera::GetSensorData(OpenRAVE::SensorBase::SensorDataPtr psensordata)
     {
-        if (psensordata->GetType() != OpenRAVE::SensorBase::ST_Camera && psensordata->GetType() != OpenRAVE::SensorBase::ST_Invalid)
-        {
-            RAVELOG_ERROR("Only camera sensor is valid!\n");
-            return false;
-        }
-        else
+        if (psensordata->GetType() == OpenRAVE::SensorBase::ST_Camera || psensordata->GetType() == OpenRAVE::SensorBase::ST_Invalid)
         {
             CameraSensorData* cameraSensor = dynamic_cast<CameraSensorData*>(psensordata.get());
 
@@ -613,7 +618,36 @@ namespace offscreen_render
             }
             return true;
         }
+        else if (psensordata->GetType() == OpenRAVE::SensorBase::ST_Laser)
+        {
+            LaserSensorData* depthSensor = dynamic_cast<LaserSensorData*>(psensordata.get());
 
+            if (!depthSensor)
+            {
+                RAVELOG_ERROR("Unable to cast to CameraSensorData.\n");
+                return false;
+            }
+
+            size_t renderSize = renderer.depthBuffer.data.size();
+            size_t imageSize = depthSensor->intensity.size();
+
+            if (renderSize != imageSize)
+            {
+                RAVELOG_ERROR("Expected render size of %lu, but got %lu. Are the resolutions setup up correctly?\n", imageSize, renderSize);
+                return false;
+            }
+
+            for (size_t i = 0; i < renderSize; i++)
+            {
+                depthSensor->intensity[i] = static_cast<OpenRAVE::dReal>(renderer.depthBuffer.data.at(i));
+            }
+            return true;
+        }
+	else
+        {
+            RAVELOG_ERROR("Only camera sensor is valid!\n");
+            return false;
+        }
     }
 
     bool RaveCamera::Supports(OpenRAVE::SensorBase::SensorType type)
